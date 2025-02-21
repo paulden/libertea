@@ -6,6 +6,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 type model struct {
@@ -56,12 +58,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.errors++
 			m.streak = 0
-			m.blockedTimer = timer.New(time.Second * 3)
+			m.blockedTimer = timer.New(time.Second * 2)
 			return m, m.blockedTimer.Init()
 		}
 
 		if m.stratagemCompletion == len(m.currentStratagem.code) {
 			m.successes++
+			m.streak++
 			m.stratagemCompletion = 0
 			m.currentStratagem = GetRandomStratagem()
 		}
@@ -71,11 +74,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "Call for your next stratagem!\n\n"
+	s := "Call for your next stratagem and save democracy!\n\n"
 
-	strategemRendering := ""
+	t := table.New().
+		Border(lipgloss.NormalBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#FFE710"))).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			switch {
+			case row == table.HeaderRow:
+				return headerStyle
+			default:
+				return cellStyle
+			}
+		}).
+		Headers("SUCCESSES", "ERRORS", "STREAK").
+		Rows([]string{fmt.Sprintf("%d", m.successes), fmt.Sprintf("%d", m.errors), fmt.Sprintf("%d", m.streak)})
 
-	s += fmt.Sprintf("Current stratagem: %s\n\n", m.currentStratagem.name)
+	s += t.Render()
+
+	strategemRendering := "\n\n\n\n\n"
+
+	strategemRendering += fmt.Sprintf("%s\n\n", m.currentStratagem.name)
 
 	for i, arrow := range m.currentStratagem.code {
 		if i < m.stratagemCompletion && !m.blockedTimer.Running() {
@@ -85,15 +104,16 @@ func (m model) View() string {
 		} else {
 			strategemRendering += ARROWS_DISPLAY[arrow]
 		}
+		strategemRendering += " "
 	}
-
-	s += fmt.Sprintf("%s \n", strategemRendering)
 
 	if m.blockedTimer.Running() {
-		s += fmt.Sprintf("Blocked for %s!", m.blockedTimer.View())
+		s += fmt.Sprintf("%s \n", wrongInput.Inherit(strategemStyle).Render(strategemRendering))
+	} else {
+		s += fmt.Sprintf("%s \n", strategemStyle.Render(strategemRendering))
 	}
 
-	s += "\nPress q to quit.\n"
+	s += lipgloss.PlaceVertical(10, lipgloss.Bottom, "\nPress q to quit.")
 
-	return s
+	return globalStyle.Render(s)
 }
