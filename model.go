@@ -1,14 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
+
+var KEYS_MAPPING = map[string]rune{
+	"up":    'u',
+	"down":  'd',
+	"right": 'r',
+	"left":  'l',
+}
 
 type model struct {
 	currentStratagem    stratagem
@@ -17,15 +21,17 @@ type model struct {
 	errors              int
 	streak              int
 	blockedTimer        timer.Model
+	styles              Styles
 }
 
-func initialModel() model {
+func NewModel(styles Styles) model {
 	return model{
 		currentStratagem:    GetRandomStratagem(),
 		stratagemCompletion: 0,
 		successes:           0,
 		errors:              0,
 		streak:              0,
+		styles:              styles,
 	}
 }
 
@@ -74,46 +80,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "Call for your next stratagem and save democracy!\n\n"
+	var output string
 
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#FFE710"))).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			switch {
-			case row == table.HeaderRow:
-				return headerStyle
-			default:
-				return cellStyle
-			}
-		}).
-		Headers("SUCCESSES", "ERRORS", "STREAK").
-		Rows([]string{fmt.Sprintf("%d", m.successes), fmt.Sprintf("%d", m.errors), fmt.Sprintf("%d", m.streak)})
+	output += m.styles.FormatScoreTable(m.successes, m.errors, m.streak)
+	output += "\n\n"
+	output += m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, m.blockedTimer.Running())
 
-	s += t.Render()
-
-	strategemRendering := "\n\n\n\n\n"
-
-	strategemRendering += fmt.Sprintf("%s\n\n", m.currentStratagem.name)
-
-	for i, arrow := range m.currentStratagem.code {
-		if i < m.stratagemCompletion && !m.blockedTimer.Running() {
-			strategemRendering += validInput.Render(ARROWS_DISPLAY[arrow])
-		} else if m.blockedTimer.Running() {
-			strategemRendering += wrongInput.Render(ARROWS_DISPLAY[arrow])
-		} else {
-			strategemRendering += ARROWS_DISPLAY[arrow]
-		}
-		strategemRendering += " "
-	}
-
-	if m.blockedTimer.Running() {
-		s += fmt.Sprintf("%s \n", wrongInput.Inherit(strategemStyle).Render(strategemRendering))
-	} else {
-		s += fmt.Sprintf("%s \n", strategemStyle.Render(strategemRendering))
-	}
-
-	s += lipgloss.PlaceVertical(10, lipgloss.Bottom, "\nPress q to quit.")
-
-	return globalStyle.Render(s)
+	return m.styles.FormatScreen(output)
 }
