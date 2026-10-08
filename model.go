@@ -61,9 +61,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		expectedKey := m.currentStratagem.code[m.stratagemCompletion]
+		direction, ok := KEYS_MAPPING[key]
+		if !ok {
+			// Keys outside of the mapping are not counted as errors.
+			return m, nil
+		}
 
-		if KEYS_MAPPING[key] == expectedKey {
+		if direction == m.currentStratagem.code[m.stratagemCompletion] {
 			m.stratagemCompletion++
 		} else {
 			m.errors++
