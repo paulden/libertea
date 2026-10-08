@@ -25,7 +25,7 @@ type model struct {
 
 func NewModel(styles Styles, layout keyLayout) model {
 	return model{
-		currentStratagem:    GetRandomStratagem(),
+		currentStratagem:    GetRandomStratagem(""),
 		stratagemCompletion: 0,
 		successes:           0,
 		errors:              0,
@@ -76,7 +76,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.successes++
 			m.streak++
 			m.stratagemCompletion = 0
-			m.currentStratagem = GetRandomStratagem()
+			m.currentStratagem = GetRandomStratagem(m.currentStratagem.name)
 		}
 	}
 
