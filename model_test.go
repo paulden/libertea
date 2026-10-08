@@ -7,7 +7,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-var testStratagem = stratagem{"Test Stratagem", []rune{'u', 'd', 'l', 'r'}}
+var testStratagem = stratagem{name: "Test Stratagem", category: "offensive", kind: "Orbital", code: []rune{'u', 'd', 'l', 'r'}}
 
 func newTestModel(t *testing.T, layoutName string) model {
 	t.Helper()
@@ -15,7 +15,11 @@ func newTestModel(t *testing.T, layoutName string) model {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := NewModel(NewStyles(termenv.ANSI256), layout)
+	stratagems, err := LoadStratagems("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewModel(NewStyles(termenv.ANSI256), layout, stratagems)
 	m.currentStratagem = testStratagem
 	return m
 }

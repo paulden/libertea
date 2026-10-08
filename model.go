@@ -22,6 +22,7 @@ type stats struct {
 }
 
 type model struct {
+	stratagems          []stratagem
 	currentStratagem    stratagem
 	stratagemCompletion int
 	stratagemStart      time.Time
@@ -31,9 +32,10 @@ type model struct {
 	styles              Styles
 }
 
-func NewModel(styles Styles, layout keyLayout) model {
+func NewModel(styles Styles, layout keyLayout, stratagems []stratagem) model {
 	return model{
-		currentStratagem: GetRandomStratagem(""),
+		stratagems:       stratagems,
+		currentStratagem: GetRandomStratagem(stratagems, ""),
 		layout:           layout,
 		styles:           styles,
 	}
@@ -101,7 +103,7 @@ func (m *model) completeStratagem() {
 
 	m.stratagemCompletion = 0
 	m.stratagemStart = time.Time{}
-	m.currentStratagem = GetRandomStratagem(m.currentStratagem.name)
+	m.currentStratagem = GetRandomStratagem(m.stratagems, m.currentStratagem.name)
 }
 
 func (m model) View() string {
