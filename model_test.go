@@ -8,9 +8,13 @@ import (
 
 var testStratagem = stratagem{"Test Stratagem", []rune{'u', 'd', 'l', 'r'}}
 
-func newTestModel(t *testing.T) model {
+func newTestModel(t *testing.T, layoutName string) model {
 	t.Helper()
-	m := NewModel(NewStyles())
+	layout, err := GetLayout(layoutName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := NewModel(NewStyles(), layout)
 	m.currentStratagem = testStratagem
 	return m
 }
@@ -35,7 +39,7 @@ var (
 )
 
 func TestCompleteStratagemWithArrows(t *testing.T) {
-	m := press(newTestModel(t), keyUp, keyDown, keyLeft, keyRight)
+	m := press(newTestModel(t, "arrows"), keyUp, keyDown, keyLeft, keyRight)
 
 	if m.successes != 1 || m.streak != 1 {
 		t.Errorf("unexpected stats after success: successes=%d streak=%d", m.successes, m.streak)
@@ -45,8 +49,28 @@ func TestCompleteStratagemWithArrows(t *testing.T) {
 	}
 }
 
+func TestLetterLayouts(t *testing.T) {
+	cases := map[string][]rune{
+		"wasd": {'w', 's', 'a', 'd'},
+		"zqsd": {'z', 's', 'q', 'd'},
+		"vim":  {'k', 'j', 'h', 'l'},
+		"all":  {'Z', 'S', 'A', 'L'},
+	}
+	for layout, letters := range cases {
+		t.Run(layout, func(t *testing.T) {
+			m := newTestModel(t, layout)
+			for _, letter := range letters {
+				m = press(m, runeKey(letter))
+			}
+			if m.successes != 1 || m.errors != 0 {
+				t.Errorf("unexpected stats: successes=%d errors=%d", m.successes, m.errors)
+			}
+		})
+	}
+}
+
 func TestErrorRestartsStratagemFromScratch(t *testing.T) {
-	m := press(newTestModel(t), keyUp, keyDown, keyUp)
+	m := press(newTestModel(t, "arrows"), keyUp, keyDown, keyUp)
 
 	if m.errors != 1 || m.streak != 0 {
 		t.Errorf("unexpected stats after error: errors=%d streak=%d", m.errors, m.streak)
@@ -68,9 +92,30 @@ func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 }
 
 func TestUnmappedKeysAreIgnored(t *testing.T) {
-	m := press(newTestModel(t), keyUp, runeKey('w'), runeKey('x'))
+	m := press(newTestModel(t, "arrows"), keyUp, runeKey('w'), runeKey('x'))
 
 	if m.errors != 0 || m.stratagemCompletion != 1 {
 		t.Errorf("unmapped keys should be ignored, got completion %d and %d errors", m.stratagemCompletion, m.errors)
+	}
+}
+
+func TestQuitKeys(t *testing.T) {
+	for _, key := range []tea.KeyMsg{{Type: tea.KeyEsc}, {Type: tea.KeyCtrlC}} {
+		_, cmd := newTestModel(t, "all").Update(key)
+		if cmd == nil {
+			t.Fatalf("%s should quit", key)
+		}
+		if _, ok := cmd().(tea.QuitMsg); !ok {
+			t.Errorf("%s should quit", key)
+		}
+	}
+}
+
+func TestUnknownLayout(t *testing.T) {
+	if _, err := GetLayout("dvorak"); err == nil {
+		t.Error("unknown layout should return an error")
+	}
+	if _, err := GetLayout("ZQSD"); err != nil {
+		t.Errorf("layout names should be case insensitive: %v", err)
 	}
 }

@@ -50,7 +50,7 @@ var ARROWS_DISPLAY = map[rune]string{
 type Styles interface {
 	FormatScoreTable(successes, errors, streak int) string
 	FormatStratagem(strategem stratagem, completion int, isBlocked bool, remaining time.Duration) string
-	FormatScreen(render string) string
+	FormatScreen(render string, layoutDescription string) string
 }
 
 type styles struct{}
@@ -99,11 +99,11 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering+"\n "))
 }
 
-func (s styles) FormatScreen(output string) string {
+func (s styles) FormatScreen(output string, layoutDescription string) string {
 	var render string
 
 	header := "Call for your next stratagem and save democracy!\n"
-	footer := "Press q to quit."
+	footer := fmt.Sprintf("Keys: %s. Press Esc to quit.", layoutDescription)
 
 	render = header + "\n" + output + "\n" + footer
 
