@@ -83,7 +83,13 @@ var STRATAGEMS = []stratagem{
 	{"Eagle 500kg Bomb", []rune{'u', 'r', 'd', 'd', 'd'}},
 }
 
-func GetRandomStratagem() stratagem {
-	randomIndex := rand.Intn(len(STRATAGEMS))
-	return STRATAGEMS[randomIndex]
+// GetRandomStratagem picks a random stratagem, avoiding the excluded one so
+// that the same stratagem is never asked twice in a row.
+func GetRandomStratagem(excludedName string) stratagem {
+	for {
+		candidate := STRATAGEMS[rand.Intn(len(STRATAGEMS))]
+		if candidate.name != excludedName || len(STRATAGEMS) == 1 {
+			return candidate
+		}
+	}
 }

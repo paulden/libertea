@@ -47,6 +47,9 @@ func TestCompleteStratagemWithArrows(t *testing.T) {
 	if m.stratagemCompletion != 0 {
 		t.Errorf("completion should be reset, got %d", m.stratagemCompletion)
 	}
+	if m.currentStratagem.name == testStratagem.name {
+		t.Error("the same stratagem should not be asked twice in a row")
+	}
 }
 
 func TestLetterLayouts(t *testing.T) {
