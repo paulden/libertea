@@ -20,6 +20,15 @@ var (
 	headerColor      = color("#0092A6", "6")
 )
 
+// In-game permit colors of each stratagem category, with bright ANSI variants
+// that stay readable on dark backgrounds.
+var CATEGORY_COLORS = map[string]lipgloss.CompleteColor{
+	"offensive": color("#DC6455", "9"),
+	"supply":    color("#55B9D2", "12"),
+	"defensive": color("#699655", "10"),
+	"mission":   color("#C9B269", "11"),
+}
+
 func color(hex, ansi string) lipgloss.CompleteColor {
 	return lipgloss.CompleteColor{TrueColor: hex, ANSI256: hex, ANSI: ansi}
 }
@@ -109,7 +118,12 @@ func (s styles) FormatScoreTable(stats stats) string {
 }
 
 func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked bool, remaining time.Duration) string {
-	rendering := fmt.Sprintf("%s\n\n", stratagem.name)
+	name, label := stratagem.name, categoryLabel(stratagem)
+	if !isBlocked {
+		categoryStyle := lipgloss.NewStyle().Foreground(CATEGORY_COLORS[stratagem.category])
+		name, label = categoryStyle.Bold(true).Render(name), categoryStyle.Render(label)
+	}
+	rendering := fmt.Sprintf("%s\n%s\n\n", name, label)
 
 	for i, arrow := range stratagem.code {
 		if i < completion {
@@ -132,6 +146,14 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 	}
 
 	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering+"\n "))
+}
+
+func categoryLabel(stratagem stratagem) string {
+	label := strings.ToUpper(stratagem.category)
+	if stratagem.kind != "" {
+		label += " · " + strings.ToUpper(stratagem.kind)
+	}
+	return label
 }
 
 func (s styles) FormatTimes(stats stats) string {
