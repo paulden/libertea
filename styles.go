@@ -36,6 +36,11 @@ var (
 
 	cellStyle = lipgloss.NewStyle().
 			Padding(0, 1)
+
+	timesStyle = lipgloss.NewStyle().
+			Width(55).
+			Faint(true).
+			Align(lipgloss.Center)
 )
 
 // Plain arrows from the Arrows block render as a single cell in most fonts,
@@ -48,8 +53,9 @@ var ARROWS_DISPLAY = map[rune]string{
 }
 
 type Styles interface {
-	FormatScoreTable(successes, errors, streak int) string
+	FormatScoreTable(stats stats) string
 	FormatStratagem(strategem stratagem, completion int, isBlocked bool, remaining time.Duration) string
+	FormatTimes(stats stats) string
 	FormatScreen(render string, layoutDescription string) string
 }
 
@@ -59,7 +65,7 @@ func NewStyles() Styles {
 	return &styles{}
 }
 
-func (s styles) FormatScoreTable(successes, errors, streak int) string {
+func (s styles) FormatScoreTable(stats stats) string {
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#FFE710"))).
@@ -71,8 +77,13 @@ func (s styles) FormatScoreTable(successes, errors, streak int) string {
 				return cellStyle
 			}
 		}).
-		Headers("SUCCESSES", "ERRORS", "STREAK").
-		Rows([]string{fmt.Sprintf("%d", successes), fmt.Sprintf("%d", errors), fmt.Sprintf("%d", streak)})
+		Headers("SUCCESSES", "ERRORS", "STREAK", "BEST STREAK").
+		Rows([]string{
+			fmt.Sprintf("%d", stats.successes),
+			fmt.Sprintf("%d", stats.errors),
+			fmt.Sprintf("%d", stats.streak),
+			fmt.Sprintf("%d", stats.bestStreak),
+		})
 
 	return t.Render()
 }
@@ -97,6 +108,17 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 	}
 
 	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering+"\n "))
+}
+
+func (s styles) FormatTimes(stats stats) string {
+	return timesStyle.Render(fmt.Sprintf("Last: %s   Best: %s", formatDuration(stats.lastTime), formatDuration(stats.bestTime)))
+}
+
+func formatDuration(d time.Duration) string {
+	if d == 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
 func (s styles) FormatScreen(output string, layoutDescription string) string {
