@@ -7,6 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+const (
+	PENALTY_DURATION = 2 * time.Second
+	PENALTY_TICK     = 100 * time.Millisecond
+)
+
 var KEYS_MAPPING = map[string]rune{
 	"up":    'u',
 	"down":  'd',
@@ -41,7 +46,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case timer.TickMsg:
+	case timer.TickMsg, timer.StartStopMsg, timer.TimeoutMsg:
 		var cmd tea.Cmd
 		m.blockedTimer, cmd = m.blockedTimer.Update(msg)
 		return m, cmd
@@ -53,7 +58,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.blockedTimer.Running() {
-			m.blockedTimer.Start()
 			return m, nil
 		}
 
@@ -64,7 +68,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.errors++
 			m.streak = 0
-			m.blockedTimer = timer.New(time.Second * 2)
+			m.stratagemCompletion = 0
+			m.blockedTimer = timer.NewWithInterval(PENALTY_DURATION, PENALTY_TICK)
 			return m, m.blockedTimer.Init()
 		}
 
@@ -84,7 +89,7 @@ func (m model) View() string {
 
 	output += m.styles.FormatScoreTable(m.successes, m.errors, m.streak)
 	output += "\n\n"
-	output += m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, m.blockedTimer.Running())
+	output += m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, m.blockedTimer.Running(), m.blockedTimer.Timeout)
 
 	return m.styles.FormatScreen(output)
 }
