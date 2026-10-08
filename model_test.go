@@ -41,14 +41,17 @@ var (
 func TestCompleteStratagemWithArrows(t *testing.T) {
 	m := press(newTestModel(t, "arrows"), keyUp, keyDown, keyLeft, keyRight)
 
-	if m.successes != 1 || m.streak != 1 {
-		t.Errorf("unexpected stats after success: successes=%d streak=%d", m.successes, m.streak)
+	if m.stats.successes != 1 || m.stats.streak != 1 || m.stats.bestStreak != 1 {
+		t.Errorf("unexpected stats after success: %+v", m.stats)
 	}
 	if m.stratagemCompletion != 0 {
 		t.Errorf("completion should be reset, got %d", m.stratagemCompletion)
 	}
 	if m.currentStratagem.name == testStratagem.name {
 		t.Error("the same stratagem should not be asked twice in a row")
+	}
+	if m.stats.lastTime == 0 || m.stats.bestTime == 0 {
+		t.Errorf("times should be recorded: %+v", m.stats)
 	}
 }
 
@@ -65,8 +68,8 @@ func TestLetterLayouts(t *testing.T) {
 			for _, letter := range letters {
 				m = press(m, runeKey(letter))
 			}
-			if m.successes != 1 || m.errors != 0 {
-				t.Errorf("unexpected stats: successes=%d errors=%d", m.successes, m.errors)
+			if m.stats.successes != 1 || m.stats.errors != 0 {
+				t.Errorf("unexpected stats: %+v", m.stats)
 			}
 		})
 	}
@@ -75,8 +78,8 @@ func TestLetterLayouts(t *testing.T) {
 func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 	m := press(newTestModel(t, "arrows"), keyUp, keyDown, keyUp)
 
-	if m.errors != 1 || m.streak != 0 {
-		t.Errorf("unexpected stats after error: errors=%d streak=%d", m.errors, m.streak)
+	if m.stats.errors != 1 || m.stats.streak != 0 {
+		t.Errorf("unexpected stats after error: %+v", m.stats)
 	}
 	if m.stratagemCompletion != 0 {
 		t.Errorf("completion should restart from scratch, got %d", m.stratagemCompletion)
@@ -89,7 +92,7 @@ func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 	}
 
 	m = press(m, keyUp)
-	if m.stratagemCompletion != 0 || m.errors != 1 {
+	if m.stratagemCompletion != 0 || m.stats.errors != 1 {
 		t.Error("input should be ignored while blocked")
 	}
 }
@@ -97,8 +100,8 @@ func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 func TestUnmappedKeysAreIgnored(t *testing.T) {
 	m := press(newTestModel(t, "arrows"), keyUp, runeKey('w'), runeKey('x'))
 
-	if m.errors != 0 || m.stratagemCompletion != 1 {
-		t.Errorf("unmapped keys should be ignored, got completion %d and %d errors", m.stratagemCompletion, m.errors)
+	if m.stats.errors != 0 || m.stratagemCompletion != 1 {
+		t.Errorf("unmapped keys should be ignored, got completion %d and stats %+v", m.stratagemCompletion, m.stats)
 	}
 }
 
