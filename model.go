@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -30,6 +31,9 @@ type model struct {
 	blockedTimer        timer.Model
 	layout              keyLayout
 	styles              Styles
+	// Terminal size, used to center the game. Zero until bubbletea reports it.
+	width  int
+	height int
 }
 
 func NewModel(styles Styles, layout keyLayout, stratagems []stratagem) model {
@@ -47,6 +51,10 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		return m, nil
+
 	case timer.TickMsg, timer.StartStopMsg, timer.TimeoutMsg:
 		var cmd tea.Cmd
 		m.blockedTimer, cmd = m.blockedTimer.Update(msg)
@@ -115,5 +123,8 @@ func (m model) View() string {
 	output += "\n"
 	output += m.styles.FormatTimes(m.stats)
 
-	return m.styles.FormatScreen(output, m.layout.description)
+	screen := m.styles.FormatScreen(output, m.layout.description)
+
+	// Place leaves the screen untouched when the terminal is smaller than it.
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, screen)
 }
