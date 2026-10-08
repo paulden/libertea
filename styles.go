@@ -44,7 +44,6 @@ var ARROWS_DISPLAY = map[rune]string{
 	'l': "🢀",
 }
 
-
 type Styles interface {
 	FormatScoreTable(successes, errors, streak int) string
 	FormatStratagem(strategem stratagem, completion int, isBlocked bool) string
