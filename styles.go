@@ -10,6 +10,11 @@ import (
 	"github.com/muesli/termenv"
 )
 
+const (
+	STRATAGEM_WIDTH = 55
+	ICON_GAP        = 2
+)
+
 // Colors are given explicitly for each profile: the automatic downgrade of hex
 // colors to the 16 ANSI colors gives poor results.
 var (
@@ -43,7 +48,7 @@ var (
 			BorderBackground(borderBackground)
 
 	strategemStyle = lipgloss.NewStyle().
-			Width(55).
+			Width(STRATAGEM_WIDTH).
 			Bold(true).
 			Align(lipgloss.Center)
 
@@ -87,11 +92,26 @@ type Styles interface {
 type styles struct {
 	// Without colors, progress is shown with a cursor under the next arrow.
 	hasColors bool
+	// Image ids of the icons transmitted to the terminal, nil when the
+	// terminal cannot display images.
+	iconIDs map[string]int
 }
 
-func NewStyles(profile termenv.Profile) Styles {
+func NewStyles(profile termenv.Profile, iconIDs map[string]int) Styles {
 	lipgloss.SetColorProfile(profile)
-	return &styles{hasColors: profile != termenv.Ascii}
+	return &styles{
+		hasColors: profile != termenv.Ascii,
+		iconIDs:   iconIDs,
+	}
+}
+
+// icon returns the placeholder of a stratagem icon, or an empty string when
+// it was not transmitted to the terminal.
+func (s styles) icon(stratagem stratagem) string {
+	if id := s.iconIDs[stratagem.icon]; id != 0 {
+		return IconPlaceholder(id)
+	}
+	return ""
 }
 
 func (s styles) FormatScoreTable(stats stats) string {
@@ -118,6 +138,12 @@ func (s styles) FormatScoreTable(stats stats) string {
 }
 
 func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked bool, remaining time.Duration) string {
+	icon := s.icon(stratagem)
+	style := strategemStyle
+	if icon != "" {
+		style = style.Width(STRATAGEM_WIDTH - ICON_COLUMNS - ICON_GAP)
+	}
+
 	name, label := stratagem.name, categoryLabel(stratagem)
 	if !isBlocked {
 		categoryStyle := lipgloss.NewStyle().Foreground(CATEGORY_COLORS[stratagem.category])
@@ -142,10 +168,17 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 
 	if isBlocked {
 		rendering += fmt.Sprintf("\nWrong input! Start over in %.1fs", remaining.Seconds())
-		return fmt.Sprintf("%s \n", wrongInput.Inherit(strategemStyle).Render(rendering))
+		return withIcon(icon, wrongInput.Inherit(style).Render(rendering))
 	}
 
-	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering+"\n "))
+	return withIcon(icon, style.Render(rendering+"\n "))
+}
+
+func withIcon(icon, text string) string {
+	if icon != "" {
+		text = lipgloss.JoinHorizontal(lipgloss.Center, icon, strings.Repeat(" ", ICON_GAP), text)
+	}
+	return fmt.Sprintf("%s \n", text)
 }
 
 func categoryLabel(stratagem stratagem) string {

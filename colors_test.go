@@ -51,7 +51,7 @@ func TestUnknownColorMode(t *testing.T) {
 }
 
 func TestCursorShownWithoutColors(t *testing.T) {
-	render := NewStyles(termenv.Ascii).FormatStratagem(testStratagem, 2, false, 0)
+	render := NewStyles(termenv.Ascii, nil).FormatStratagem(testStratagem, 2, false, 0)
 	lines := strings.Split(render, "\n")
 
 	arrowsLine, cursorLine := -1, -1
@@ -72,7 +72,7 @@ func TestCursorShownWithoutColors(t *testing.T) {
 }
 
 func TestNoCursorWithColors(t *testing.T) {
-	render := NewStyles(termenv.ANSI).FormatStratagem(testStratagem, 2, false, 0)
+	render := NewStyles(termenv.ANSI, nil).FormatStratagem(testStratagem, 2, false, 0)
 	if strings.Contains(render, "^") {
 		t.Errorf("cursor should only be shown without colors:\n%s", render)
 	}
@@ -84,7 +84,7 @@ func column(line, substr string) int {
 
 func TestCategoryShownWithAndWithoutColors(t *testing.T) {
 	for _, profile := range []termenv.Profile{termenv.Ascii, termenv.ANSI, termenv.ANSI256, termenv.TrueColor} {
-		render := NewStyles(profile).FormatStratagem(testStratagem, 0, false, 0)
+		render := NewStyles(profile, nil).FormatStratagem(testStratagem, 0, false, 0)
 		if !strings.Contains(render, "OFFENSIVE · ORBITAL") {
 			t.Errorf("profile %v: the category label should always be shown:\n%s", profile, render)
 		}
