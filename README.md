@@ -5,53 +5,72 @@ Do you want to help spread managed democracy?
 Then you've come to the right place with `libertea`, a TUI-based stratagem hero to perfect your
 skills before you prove yourself in the battlefield and put an end to our autocratic enemies!
 
-[![asciicast](https://asciinema.org/a/54VFKPpaTbzt1WTDmmmHDAEAO.svg)](https://asciinema.org/a/54VFKPpaTbzt1WTDmmmHDAEAO)
+[![CI](https://github.com/paulden/libertea/actions/workflows/ci.yml/badge.svg)](https://github.com/paulden/libertea/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/paulden/libertea?include_prereleases)](https://github.com/paulden/libertea/releases)
 
-## Run it
+## Install
 
-### Using Docker
+### Docker
 
-You can run it from Docker as long as you attach a TTY to be able to interact with it.
-Since the TUI uses colors, you should enable colors in the `xterm` started.
-
-```
-docker run -it -e "TERM=xterm-256color" ghcr.io/paulden/libertea:main
-```
-
-### Using binary
-
-Download the binary matching your OS and architecture in the [releases](https://github.com/paulden/libertea/releases).
-
-For Linux:
-```
-VERSION=$(curl https://api.github.com/repos/paulden/libertea/releases/latest | jq -r .tag_name)
-curl -LO https://github.com/paulden/libertea/releases/download/$VERSION/libertea_Linux_x86_64.tar.gz
-tar xvf libertea_Linux_x86_64.tar.gz libertea
-./libertea # optionally, you can move it to a more friendly binary folder
-```
-
-### From source
-
-You need to have Go >= 1.23 installed to run it from source
+Images are published for `linux/amd64` and `linux/arm64`. Attach a TTY with `-it`,
+and forward your terminal type so that colors are detected:
 
 ```
-go get .
-go run .
+docker run --rm -it -e TERM -e COLORTERM ghcr.io/paulden/libertea
 ```
 
-Or build it and run it.
+| Tag | Content |
+|-----|---------|
+| `latest`, `1`, `1.2`, `1.2.3` | Releases |
+| `main` | Latest commit on the `main` branch |
+
+### Binary
+
+Download the archive matching your OS and architecture from the [releases](https://github.com/paulden/libertea/releases).
+On Linux and macOS:
 
 ```
-go get .
-go build .
-./libertea
+OS=$(uname -s)    # Linux or Darwin
+ARCH=$(uname -m)  # x86_64, aarch64 or arm64
+[ "$ARCH" = aarch64 ] && ARCH=arm64
+curl -fsSLO "https://github.com/paulden/libertea/releases/latest/download/libertea_${OS}_${ARCH}.tar.gz"
+tar xzf "libertea_${OS}_${ARCH}.tar.gz" libertea
+sudo install libertea /usr/local/bin/
 ```
+
+Archives come with build provenance attestations. To check where an archive was built, with the [GitHub CLI](https://cli.github.com/):
+
+```
+gh attestation verify "libertea_${OS}_${ARCH}.tar.gz" --repo paulden/libertea
+```
+
+### Go
+
+With Go 1.26 or later:
+
+```
+go install github.com/paulden/libertea@latest
+```
+
+Or from a clone of the repository: `go run .`
 
 ## Play
 
 Type the arrow sequence of the displayed stratagem as fast as possible.
 A wrong input blocks you for 2 seconds and you have to start the stratagem over.
 Press `Esc` or `Ctrl+C` to quit.
+
+### Options
+
+Every option can be set with a flag or an environment variable, the flag wins.
+
+| Flag | Environment variable | Default | Description |
+|------|----------------------|---------|-------------|
+| `-layout` | `LIBERTEA_LAYOUT` | `all` | Letter keys, see [keyboard layouts](#keyboard-layouts) |
+| `-color` | `LIBERTEA_COLOR` | `auto` | Color mode: `auto`, `none`, `16`, `256`, `truecolor`, see [colors](#colors) |
+| `-stratagems` | `LIBERTEA_STRATAGEMS` | embedded list | YAML file with the stratagems to train on, see [stratagems](#stratagems) |
+| `-icons` | `LIBERTEA_ICONS` | `auto` | Stratagem icons: `auto`, `kitty`, `none`, see [icons](#icons) |
+| `-version` | | | Print the version and exit |
 
 ### Keyboard layouts
 
@@ -65,12 +84,9 @@ Arrow keys always work. Letter keys depend on the selected layout:
 | `vim`    | HJKL                                 |
 | `arrows` | Arrow keys only                      |
 
-Select it with the `-layout` flag or the `LIBERTEA_LAYOUT` environment variable (the flag wins):
-
 ```
-./libertea -layout zqsd
-LIBERTEA_LAYOUT=zqsd ./libertea
-docker run -it -e "TERM=xterm-256color" -e "LIBERTEA_LAYOUT=zqsd" ghcr.io/paulden/libertea:main
+libertea -layout zqsd
+docker run --rm -it -e TERM -e COLORTERM -e LIBERTEA_LAYOUT=zqsd ghcr.io/paulden/libertea
 ```
 
 ### Colors
@@ -79,19 +95,16 @@ Colors are detected from the terminal (`TERM`, `COLORTERM`, `NO_COLOR`, `CLICOLO
 Generic terminal names such as `xterm` (the default inside `docker run -t`) get 16 colors.
 Without colors, a `^` cursor shows the next expected arrow.
 
-Force a mode with the `-color` flag or the `LIBERTEA_COLOR` environment variable:
-`auto` (default), `none`, `16`, `256`, `truecolor`.
+If colors look wrong, force a mode:
 
 ```
-./libertea -color 256
-docker run -it -e "LIBERTEA_COLOR=256" ghcr.io/paulden/libertea:main
+libertea -color 256
 ```
 
 ### Stratagems
 
 The stratagems come from [`stratagems.yaml`](stratagems.yaml), embedded in the binary.
-To train on your own selection, write a file with the same format and pass it with the `-stratagems` flag
-or the `LIBERTEA_STRATAGEMS` environment variable:
+To train on your own selection, write a file with the same format and pass it with `-stratagems`:
 
 ```yaml
 stratagems:
@@ -103,7 +116,7 @@ stratagems:
 ```
 
 ```
-./libertea -stratagems my-loadout.yaml
+libertea -stratagems my-loadout.yaml
 ```
 
 To refresh the embedded list and icons from the [Helldivers Wiki](https://helldivers.wiki.gg/wiki/Stratagems)
@@ -120,8 +133,16 @@ Stratagem icons are shown next to their name in terminals supporting the
 such as [kitty](https://sw.kovidgoyal.net/kitty/) and [Ghostty](https://ghostty.org/).
 Support is detected by querying the terminal, other terminals only show the category colors.
 
-Select the mode with the `-icons` flag or the `LIBERTEA_ICONS` environment variable:
-`auto` (default), `kitty` to skip the detection, `none` to disable icons.
+If the detection fails in a terminal that supports it, or to disable icons:
+
+```
+libertea -icons kitty
+libertea -icons none
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, the CI, releases and dependency updates.
 
 ## Misc
 
