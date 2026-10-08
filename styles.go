@@ -38,11 +38,13 @@ var (
 			Padding(0, 1)
 )
 
+// Plain arrows from the Arrows block render as a single cell in most fonts,
+// unlike the Supplemental Arrows-C ones which caused rendering artifacts.
 var ARROWS_DISPLAY = map[rune]string{
-	'u': "🢁",
-	'd': "🢃",
-	'r': "🢂",
-	'l': "🢀",
+	'u': "↑",
+	'd': "↓",
+	'r': "→",
+	'l': "←",
 }
 
 type Styles interface {
