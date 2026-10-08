@@ -23,6 +23,10 @@ func press(m model, keys ...tea.KeyMsg) model {
 	return m
 }
 
+func runeKey(r rune) tea.KeyMsg {
+	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+}
+
 var (
 	keyUp    = tea.KeyMsg{Type: tea.KeyUp}
 	keyDown  = tea.KeyMsg{Type: tea.KeyDown}
@@ -60,5 +64,13 @@ func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 	m = press(m, keyUp)
 	if m.stratagemCompletion != 0 || m.errors != 1 {
 		t.Error("input should be ignored while blocked")
+	}
+}
+
+func TestUnmappedKeysAreIgnored(t *testing.T) {
+	m := press(newTestModel(t), keyUp, runeKey('w'), runeKey('x'))
+
+	if m.errors != 0 || m.stratagemCompletion != 1 {
+		t.Errorf("unmapped keys should be ignored, got completion %d and %d errors", m.stratagemCompletion, m.errors)
 	}
 }
