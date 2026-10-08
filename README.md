@@ -54,6 +54,5 @@ go build .
 
 ## TODO
 
-- Fix artifats in arrows in demo
 - Improve styles
 - Extract stratagem list to YAML
