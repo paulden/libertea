@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -46,7 +47,7 @@ var ARROWS_DISPLAY = map[rune]string{
 
 type Styles interface {
 	FormatScoreTable(successes, errors, streak int) string
-	FormatStratagem(strategem stratagem, completion int, isBlocked bool) string
+	FormatStratagem(strategem stratagem, completion int, isBlocked bool, remaining time.Duration) string
 	FormatScreen(render string) string
 }
 
@@ -74,11 +75,11 @@ func (s styles) FormatScoreTable(successes, errors, streak int) string {
 	return t.Render()
 }
 
-func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked bool) string {
+func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked bool, remaining time.Duration) string {
 	rendering := fmt.Sprintf("%s\n\n", stratagem.name)
 
 	for i, arrow := range stratagem.code {
-		if i < completion && !isBlocked {
+		if i < completion {
 			rendering += validInput.Render(ARROWS_DISPLAY[arrow])
 		} else {
 			rendering += ARROWS_DISPLAY[arrow]
@@ -86,11 +87,14 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 		rendering += " "
 	}
 
+	rendering += "\n"
+
 	if isBlocked {
+		rendering += fmt.Sprintf("\nWrong input! Start over in %.1fs", remaining.Seconds())
 		return fmt.Sprintf("%s \n", wrongInput.Inherit(strategemStyle).Render(rendering))
 	}
 
-	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering))
+	return fmt.Sprintf("%s \n", strategemStyle.Render(rendering+"\n "))
 }
 
 func (s styles) FormatScreen(output string) string {
