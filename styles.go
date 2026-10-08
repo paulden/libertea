@@ -2,11 +2,27 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/muesli/termenv"
 )
+
+// Colors are given explicitly for each profile: the automatic downgrade of hex
+// colors to the 16 ANSI colors gives poor results.
+var (
+	borderForeground = color("#222323", "0")
+	borderBackground = color("#FFE710", "3")
+	wrongColor       = color("#BF1029", "1")
+	validColor       = color("#3F8F29", "2")
+	headerColor      = color("#0092A6", "6")
+)
+
+func color(hex, ansi string) lipgloss.CompleteColor {
+	return lipgloss.CompleteColor{TrueColor: hex, ANSI256: hex, ANSI: ansi}
+}
 
 var (
 	globalStyle = lipgloss.NewStyle().
@@ -14,8 +30,8 @@ var (
 			Width(64).
 			Height(20).
 			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#222323")).
-			BorderBackground(lipgloss.Color("#FFE710"))
+			BorderForeground(borderForeground).
+			BorderBackground(borderBackground)
 
 	strategemStyle = lipgloss.NewStyle().
 			Width(55).
@@ -23,14 +39,14 @@ var (
 			Align(lipgloss.Center)
 
 	wrongInput = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#BF1029")).
+			Foreground(wrongColor).
 			Blink(true)
 
 	validInput = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#3F8F29"))
+			Foreground(validColor)
 
 	headerStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#0092A6")).
+			Foreground(headerColor).
 			Bold(true).
 			Align(lipgloss.Center)
 
@@ -59,16 +75,20 @@ type Styles interface {
 	FormatScreen(render string, layoutDescription string) string
 }
 
-type styles struct{}
+type styles struct {
+	// Without colors, progress is shown with a cursor under the next arrow.
+	hasColors bool
+}
 
-func NewStyles() Styles {
-	return &styles{}
+func NewStyles(profile termenv.Profile) Styles {
+	lipgloss.SetColorProfile(profile)
+	return &styles{hasColors: profile != termenv.Ascii}
 }
 
 func (s styles) FormatScoreTable(stats stats) string {
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("#FFE710"))).
+		BorderStyle(lipgloss.NewStyle().Foreground(borderBackground)).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			switch {
 			case row == table.HeaderRow:
@@ -100,7 +120,11 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 		rendering += " "
 	}
 
-	rendering += "\n"
+	if !s.hasColors && !isBlocked {
+		rendering += "\n" + strings.Repeat("  ", completion) + "^" + strings.Repeat("  ", len(stratagem.code)-completion-1) + " "
+	} else {
+		rendering += "\n"
+	}
 
 	if isBlocked {
 		rendering += fmt.Sprintf("\nWrong input! Start over in %.1fs", remaining.Seconds())
@@ -126,6 +150,9 @@ func (s styles) FormatScreen(output string, layoutDescription string) string {
 
 	header := "Call for your next stratagem and save democracy!\n"
 	footer := fmt.Sprintf("Keys: %s. Press Esc to quit.", layoutDescription)
+	if !s.hasColors {
+		footer += "\nNo colors detected, try -color 256."
+	}
 
 	render = header + "\n" + output + "\n" + footer
 

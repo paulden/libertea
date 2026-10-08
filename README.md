@@ -73,6 +73,20 @@ LIBERTEA_LAYOUT=zqsd ./libertea
 docker run -it -e "TERM=xterm-256color" -e "LIBERTEA_LAYOUT=zqsd" ghcr.io/paulden/libertea:main
 ```
 
+### Colors
+
+Colors are detected from the terminal (`TERM`, `COLORTERM`, `NO_COLOR`, `CLICOLOR_FORCE`).
+Generic terminal names such as `xterm` (the default inside `docker run -t`) get 16 colors.
+Without colors, a `^` cursor shows the next expected arrow.
+
+Force a mode with the `-color` flag or the `LIBERTEA_COLOR` environment variable:
+`auto` (default), `none`, `16`, `256`, `truecolor`.
+
+```
+./libertea -color 256
+docker run -it -e "LIBERTEA_COLOR=256" ghcr.io/paulden/libertea:main
+```
+
 ## Misc
 
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.

@@ -14,6 +14,10 @@ func main() {
 		"keyboard layout, one of: %s (can also be set with %s)",
 		strings.Join(LayoutNames(), ", "), LAYOUT_ENV_VAR,
 	))
+	colorMode := flag.String("color", envOrDefault(COLOR_ENV_VAR, DEFAULT_COLOR_MODE), fmt.Sprintf(
+		"color mode, one of: %s (can also be set with %s)",
+		strings.Join(ColorModeNames(), ", "), COLOR_ENV_VAR,
+	))
 	flag.Parse()
 
 	layout, err := GetLayout(*layoutName)
@@ -22,7 +26,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	styles := NewStyles()
+	colorProfile, err := ResolveColorProfile(*colorMode, os.Getenv, StdoutIsTTY())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	styles := NewStyles(colorProfile)
 	model := NewModel(styles, layout)
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
