@@ -12,13 +12,6 @@ const (
 	PENALTY_TICK     = 100 * time.Millisecond
 )
 
-var KEYS_MAPPING = map[string]rune{
-	"up":    'u',
-	"down":  'd',
-	"right": 'r',
-	"left":  'l',
-}
-
 type model struct {
 	currentStratagem    stratagem
 	stratagemCompletion int
@@ -26,16 +19,18 @@ type model struct {
 	errors              int
 	streak              int
 	blockedTimer        timer.Model
+	layout              keyLayout
 	styles              Styles
 }
 
-func NewModel(styles Styles) model {
+func NewModel(styles Styles, layout keyLayout) model {
 	return model{
 		currentStratagem:    GetRandomStratagem(),
 		stratagemCompletion: 0,
 		successes:           0,
 		errors:              0,
 		streak:              0,
+		layout:              layout,
 		styles:              styles,
 	}
 }
@@ -52,8 +47,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.KeyMsg:
-		key := msg.String()
-		if key == "ctrl+c" || key == "q" {
+		switch msg.String() {
+		case "ctrl+c", "esc":
 			return m, tea.Quit
 		}
 
@@ -61,9 +56,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		direction, ok := KEYS_MAPPING[key]
+		direction, ok := m.layout.Direction(msg.String())
 		if !ok {
-			// Keys outside of the mapping are not counted as errors.
+			// Keys outside of the layout are not counted as errors.
 			return m, nil
 		}
 
@@ -95,5 +90,5 @@ func (m model) View() string {
 	output += "\n\n"
 	output += m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, m.blockedTimer.Running(), m.blockedTimer.Timeout)
 
-	return m.styles.FormatScreen(output)
+	return m.styles.FormatScreen(output, m.layout.description)
 }

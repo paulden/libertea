@@ -47,6 +47,32 @@ go build .
 ./libertea
 ```
 
+## Play
+
+Type the arrow sequence of the displayed stratagem as fast as possible.
+A wrong input blocks you for 2 seconds and you have to start the stratagem over.
+Press `Esc` or `Ctrl+C` to quit.
+
+### Keyboard layouts
+
+Arrow keys always work. Letter keys depend on the selected layout:
+
+| Layout   | Keys                                 |
+|----------|--------------------------------------|
+| `all`    | WASD, ZQSD and HJKL (default)        |
+| `wasd`   | QWERTY keyboards                     |
+| `zqsd`   | AZERTY keyboards                     |
+| `vim`    | HJKL                                 |
+| `arrows` | Arrow keys only                      |
+
+Select it with the `-layout` flag or the `LIBERTEA_LAYOUT` environment variable (the flag wins):
+
+```
+./libertea -layout zqsd
+LIBERTEA_LAYOUT=zqsd ./libertea
+docker run -it -e "TERM=xterm-256color" -e "LIBERTEA_LAYOUT=zqsd" ghcr.io/paulden/libertea:main
+```
+
 ## Misc
 
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.
