@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/termenv"
 )
 
 var testStratagem = stratagem{"Test Stratagem", []rune{'u', 'd', 'l', 'r'}}
@@ -14,7 +15,7 @@ func newTestModel(t *testing.T, layoutName string) model {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := NewModel(NewStyles(), layout)
+	m := NewModel(NewStyles(termenv.ANSI256), layout)
 	m.currentStratagem = testStratagem
 	return m
 }
