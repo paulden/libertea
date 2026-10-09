@@ -1,0 +1,39 @@
+name: Image cleanup
+
+# Deletes old sha-* images and untagged versions from ghcr.io, multi-platform aware:
+# the platform manifests of a kept image are never deleted.
+on:
+  schedule:
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Only log what would be deleted
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete old images
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        with:
+          package: ${{ github.event.repository.name }}
+          # Releases (tags starting with a digit), main and latest are always kept, and the 10 newest sha-* images.
+          use-regex: true
+          exclude-tags: ^main$|^latest$|^[0-9]
+          keep-n-tagged: 10
+          delete-untagged: true
+          delete-orphaned-images: true
+          dry-run: ${{ inputs.dry-run || false }}
