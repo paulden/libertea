@@ -26,7 +26,13 @@ func main() {
 		"stratagem icons, one of: %s; they require a terminal supporting the kitty graphics protocol (can also be set with %s)",
 		strings.Join(IconsModeNames(), ", "), ICONS_ENV_VAR,
 	))
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println(Version())
+		return
+	}
 
 	layout, err := GetLayout(*layoutName)
 	if err != nil {
