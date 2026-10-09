@@ -1,9 +1,11 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
 
@@ -128,5 +130,35 @@ func TestUnknownLayout(t *testing.T) {
 	}
 	if _, err := GetLayout("ZQSD"); err != nil {
 		t.Errorf("layout names should be case insensitive: %v", err)
+	}
+}
+
+func TestViewIsCenteredInTheTerminal(t *testing.T) {
+	m := newTestModel(t, "all")
+	screen := m.View()
+	screenWidth, screenHeight := lipgloss.Width(screen), lipgloss.Height(screen)
+
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: screenWidth + 40, Height: screenHeight + 10})
+	view := updated.(model).View()
+
+	if lipgloss.Width(view) != screenWidth+40 || lipgloss.Height(view) != screenHeight+10 {
+		t.Fatalf("view should fill the terminal, got %dx%d", lipgloss.Width(view), lipgloss.Height(view))
+	}
+	lines := strings.Split(view, "\n")
+	if strings.TrimSpace(lines[4]) != "" || strings.TrimSpace(lines[5]) == "" {
+		t.Errorf("the screen should start after 5 blank lines")
+	}
+	if !strings.HasPrefix(lines[5], strings.Repeat(" ", 20)) || strings.HasPrefix(lines[5], strings.Repeat(" ", 21)) {
+		t.Errorf("the screen should be indented by 20 columns: %q", lines[5])
+	}
+}
+
+func TestViewInASmallTerminal(t *testing.T) {
+	m := newTestModel(t, "all")
+	screen := m.View()
+
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
+	if view := updated.(model).View(); view != screen {
+		t.Error("the screen should be left untouched when the terminal is too small")
 	}
 }
