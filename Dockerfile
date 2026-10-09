@@ -1,26 +1,21 @@
-## Build
-FROM golang:1.23-alpine AS build
+## Build: cross-compile natively for the target platform, no emulation needed.
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
 
-WORKDIR /app
+ARG TARGETOS TARGETARCH
+
+WORKDIR /src
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o libertea .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/libertea .
 
-## Run
-FROM alpine:edge
+## Run: static binary on a distroless base, no shell nor package manager.
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:e2e927ec666bae08560abb3c55d0659eceabb657f56b6782ab500a9fc7f555e3
 
-RUN apk --no-cache add ca-certificates tzdata
+COPY --from=build /out/libertea /usr/local/bin/libertea
 
-RUN addgroup -g 1000 sre && adduser -u 1000 -G sre -D sre
-
-USER 1000
-
-WORKDIR /app
-
-COPY --chown=1000:1000 --from=build /app/libertea .
-
-ENTRYPOINT ["/app/libertea"]
+ENTRYPOINT ["/usr/local/bin/libertea"]
