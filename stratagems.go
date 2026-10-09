@@ -32,6 +32,7 @@ type stratagem struct {
 	category string
 	kind     string
 	code     []rune
+	icon     string
 }
 
 type stratagemsFile struct {
@@ -40,6 +41,7 @@ type stratagemsFile struct {
 		Category string   `yaml:"category"`
 		Type     string   `yaml:"type"`
 		Code     []string `yaml:"code"`
+		Icon     string   `yaml:"icon"`
 	} `yaml:"stratagems"`
 }
 
@@ -97,7 +99,11 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 			code = append(code, direction)
 		}
 
-		stratagems = append(stratagems, stratagem{entry.Name, entry.Category, entry.Type, code})
+		if entry.Icon != "" && !HasIcon(entry.Icon) {
+			return nil, fmt.Errorf("stratagem %q has an unknown icon %q", entry.Name, entry.Icon)
+		}
+
+		stratagems = append(stratagems, stratagem{entry.Name, entry.Category, entry.Type, code, entry.Icon})
 	}
 
 	if len(stratagems) == 0 {

@@ -99,22 +99,36 @@ stratagems:
     category: offensive # one of offensive, supply, defensive, mission
     type: Orbital       # optional
     code: [right, right, up]
+    icon: orbital-precision-strike # optional, one of the embedded icons
 ```
 
 ```
 ./libertea -stratagems my-loadout.yaml
 ```
 
-To refresh the embedded list from the [Helldivers Wiki](https://helldivers.wiki.gg/wiki/Stratagems):
+To refresh the embedded list and icons from the [Helldivers Wiki](https://helldivers.wiki.gg/wiki/Stratagems)
+(requires `rsvg-convert` from librsvg):
 
 ```
 go run ./cmd/update-stratagems
 ```
 
+### Icons
+
+Stratagem icons are shown next to their name in terminals supporting the
+[kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/) with Unicode placeholders,
+such as [kitty](https://sw.kovidgoyal.net/kitty/) and [Ghostty](https://ghostty.org/).
+Support is detected by querying the terminal, other terminals only show the category colors.
+
+Select the mode with the `-icons` flag or the `LIBERTEA_ICONS` environment variable:
+`auto` (default), `kitty` to skip the detection, `none` to disable icons.
+
 ## Misc
 
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.
 - The list of stratagems is generated from the Helldivers [wiki](https://helldivers.wiki.gg/wiki/Stratagems), whose content is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0).
+- Stratagem icons are hand traced from the game assets by [Dogo314](https://helldivers.wiki.gg/wiki/User:Dogo314) for the Helldivers Wiki.
+  The original artwork belongs to Arrowhead Game Studios, see [icons/README.md](icons/README.md).
 
 ## TODO
 

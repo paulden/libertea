@@ -9,455 +9,569 @@ stratagems:
     category: offensive
     type: Orbital
     code: [right, right, up]
+    icon: orbital-precision-strike
   - name: Orbital Gatling Barrage
     category: offensive
     type: Orbital
     code: [right, down, left, up, up]
+    icon: orbital-gatling-barrage
   - name: Orbital Gas Strike
     category: offensive
     type: Orbital
     code: [right, right, down, right]
+    icon: orbital-gas-strike
   - name: Orbital 120mm HE Barrage
     category: offensive
     type: Orbital
     code: [right, right, down, left, right, down]
+    icon: orbital-120mm-he-barrage
   - name: Orbital Airburst Strike
     category: offensive
     type: Orbital
     code: [right, right, right]
+    icon: orbital-airburst-strike
   - name: Orbital Smoke Strike
     category: offensive
     type: Orbital
     code: [right, right, down, up]
+    icon: orbital-smoke-strike
   - name: Orbital EMS Strike
     category: offensive
     type: Orbital
     code: [right, right, left, down]
+    icon: orbital-ems-strike
   - name: Orbital 380mm HE Barrage
     category: offensive
     type: Orbital
     code: [right, down, up, up, left, down, down]
+    icon: orbital-380mm-he-barrage
   - name: Orbital Walking Barrage
     category: offensive
     type: Orbital
     code: [right, down, right, down, right, down]
+    icon: orbital-walking-barrage
   - name: Orbital Laser
     category: offensive
     type: Orbital
     code: [right, down, up, right, down]
+    icon: orbital-laser
   - name: Orbital Napalm Barrage
     category: offensive
     type: Orbital
     code: [right, right, down, left, right, up]
+    icon: orbital-napalm-barrage
   - name: Orbital Railcannon Strike
     category: offensive
     type: Orbital
     code: [right, up, down, down, right]
+    icon: orbital-railcannon-strike
   - name: Eagle Gas Airstrike
     category: offensive
     type: Eagle
     code: [up, right, left, right]
+    icon: eagle-gas-airstrike
   - name: Eagle Strafing Run
     category: offensive
     type: Eagle
     code: [up, right, right]
+    icon: eagle-strafing-run
   - name: Eagle Airstrike
     category: offensive
     type: Eagle
     code: [up, right, down, right]
+    icon: eagle-airstrike
   - name: Eagle Cluster Bomb
     category: offensive
     type: Eagle
     code: [up, right, down, down, right]
+    icon: eagle-cluster-bomb
   - name: Eagle Smoke Strike
     category: offensive
     type: Eagle
     code: [up, right, up, down]
+    icon: eagle-smoke-strike
   - name: Eagle Napalm Airstrike
     category: offensive
     type: Eagle
     code: [up, right, down, up]
+    icon: eagle-napalm-airstrike
   - name: Eagle 110mm Rocket Pods
     category: offensive
     type: Eagle
     code: [up, right, up, left]
+    icon: eagle-110mm-rocket-pods
   - name: Eagle 500kg Bomb
     category: offensive
     type: Eagle
     code: [up, right, down, down, down]
+    icon: eagle-500kg-bomb
   - name: MG-43 Machine Gun
     category: supply
     type: Support Weapon
     code: [down, left, down, up, right]
+    icon: mg-43-machine-gun
   - name: EAT-17 Expendable Anti-Tank
     category: supply
     type: Support Weapon
     code: [down, down, left, up, right]
+    icon: eat-17-expendable-anti-tank
   - name: M-105 Stalwart
     category: supply
     type: Support Weapon
     code: [down, left, down, up, up, left]
+    icon: m-105-stalwart
   - name: LAS-98 Laser Cannon
     category: supply
     type: Support Weapon
     code: [down, left, down, up, left]
+    icon: las-98-laser-cannon
   - name: APW-1 Anti-Materiel Rifle
     category: supply
     type: Support Weapon
     code: [down, left, right, up, down]
+    icon: apw-1-anti-materiel-rifle
   - name: GR-8 Recoilless Rifle
     category: supply
     type: Support Weapon
     code: [down, left, right, right, left]
+    icon: gr-8-recoilless-rifle
   - name: GL-21 Grenade Launcher
     category: supply
     type: Support Weapon
     code: [down, left, up, left, down]
+    icon: gl-21-grenade-launcher
   - name: FLAM-40 Flamethrower
     category: supply
     type: Support Weapon
     code: [down, left, up, down, up]
+    icon: flam-40-flamethrower
   - name: MG-206 Heavy Machine Gun
     category: supply
     type: Support Weapon
     code: [down, left, up, down, down]
+    icon: mg-206-heavy-machine-gun
   - name: AC-8 Autocannon
     category: supply
     type: Support Weapon
     code: [down, left, down, up, up, right]
+    icon: ac-8-autocannon
   - name: ARC-3 Arc Thrower
     category: supply
     type: Support Weapon
     code: [down, right, down, up, left, left]
+    icon: arc-3-arc-thrower
   - name: LAS-99 Quasar Cannon
     category: supply
     type: Support Weapon
     code: [down, down, up, left, right]
+    icon: las-99-quasar-cannon
   - name: RL-77 Airburst Rocket Launcher
     category: supply
     type: Support Weapon
     code: [down, up, up, left, right]
+    icon: rl-77-airburst-rocket-launcher
   - name: MLS-4X Commando
     category: supply
     type: Support Weapon
     code: [down, left, up, down, right]
+    icon: mls-4x-commando
   - name: FAF-14 Spear
     category: supply
     type: Support Weapon
     code: [down, down, up, down, down]
+    icon: faf-14-spear
   - name: RS-422 Railgun
     category: supply
     type: Support Weapon
     code: [down, right, down, up, left, right]
+    icon: rs-422-railgun
   - name: StA-X3 W.A.S.P. Launcher
     category: supply
     type: Support Weapon
     code: [down, down, up, down, right]
+    icon: sta-x3-w-a-s-p-launcher
   - name: CQC-20 Breaching Hammer
     category: supply
     type: Support Weapon
     code: [down, left, right, left, up]
+    icon: cqc-20-breaching-hammer
   - name: PLAS-45 Epoch
     category: supply
     type: Support Weapon
     code: [down, left, up, left, right]
+    icon: plas-45-epoch
   - name: MGX-42 Bullet Storm
     category: supply
     type: Support Weapon
     code: [down, left, down, right, up, left]
+    icon: mgx-42-bullet-storm
   - name: S-11 Speargun
     category: supply
     type: Support Weapon
     code: [down, right, down, left, up, right]
+    icon: s-11-speargun
   - name: CQC-9 Defoliation Tool
     category: supply
     type: Support Weapon
     code: [down, left, right, right, down]
+    icon: cqc-9-defoliation-tool
   - name: GL-52 De-Escalator
     category: supply
     type: Support Weapon
     code: [down, right, up, left, right]
+    icon: gl-52-de-escalator
   - name: EAT-700 Expendable Napalm
     category: supply
     type: Support Weapon
     code: [down, down, left, up, left]
+    icon: eat-700-expendable-napalm
   - name: TX-41 Sterilizer
     category: supply
     type: Support Weapon
     code: [down, left, up, down, left]
+    icon: tx-41-sterilizer
   - name: EAT-411 Leveller
     category: supply
     type: Support Weapon
     code: [down, down, left, up, down]
+    icon: eat-411-leveller
   - name: GL-28 Belt-Fed Grenade Launcher
     category: supply
     type: Support Weapon
     code: [down, left, up, left, up, up]
+    icon: gl-28-belt-fed-grenade-launcher
   - name: B/MD C4 Pack
     category: supply
     type: Support Weapon
     code: [down, right, up, up, right, up]
+    icon: b-md-c4-pack
   - name: MS-11 Solo Silo
     category: supply
     type: Support Weapon
     code: [down, up, right, down, down]
+    icon: ms-11-solo-silo
   - name: B/FLAM-80 Cremator
     category: supply
     type: Support Weapon
     code: [down, down, right, down, up, up]
+    icon: b-flam-80-cremator
   - name: M-1000 Maxigun
     category: supply
     type: Support Weapon
     code: [down, left, right, down, up, up]
+    icon: m-1000-maxigun
   - name: CQC-1 One True Flag
     category: supply
     type: Support Weapon
     code: [down, left, right, right, up]
+    icon: cqc-1-one-true-flag
   - name: 40-K Meltagun
     category: supply
     type: Support Weapon
     code: [down, left, up, left, left, down]
+    icon: 40-k-meltagun
   - name: B-1 Supply Pack
     category: supply
     type: Backpack
     code: [down, left, down, up, up, down]
+    icon: b-1-supply-pack
   - name: LIFT-850 Jump Pack
     category: supply
     type: Backpack
     code: [down, up, up, down, up]
+    icon: lift-850-jump-pack
   - name: SH-20 Ballistic Shield Backpack
     category: supply
     type: Backpack
     code: [down, left, down, down, up, left]
+    icon: sh-20-ballistic-shield-backpack
   - name: AX/AR-23 Guard Dog
     category: supply
     type: Backpack
     code: [down, up, left, up, right, down]
+    icon: ax-ar-23-guard-dog
   - name: AX/LAS-5 Rover
     category: supply
     type: Backpack
     code: [down, up, left, up, right, right]
+    icon: ax-las-5-rover
   - name: SH-32 Shield Generator Pack
     category: supply
     type: Backpack
     code: [down, up, left, right, left, right]
+    icon: sh-32-shield-generator-pack
   - name: SH-51 Directional Shield
     category: supply
     type: Backpack
     code: [down, up, left, right, up, up]
+    icon: sh-51-directional-shield
   - name: AX/FLAM-75 Hot Dog
     category: supply
     type: Backpack
     code: [down, up, left, up, left, left]
+    icon: ax-flam-75-hot-dog
   - name: B-100 Portable Hellbomb
     category: supply
     type: Backpack
     code: [down, right, up, up, up]
+    icon: b-100-portable-hellbomb
   - name: AX/ARC-3 K-9
     category: supply
     type: Backpack
     code: [down, up, left, up, right, left]
+    icon: ax-arc-3-k-9
   - name: LIFT-860 Hover Pack
     category: supply
     type: Backpack
     code: [down, up, up, down, left, right]
+    icon: lift-860-hover-pack
   - name: AX/TX-13 Dog Breath
     category: supply
     type: Backpack
     code: [down, up, left, up, right, up]
+    icon: ax-tx-13-dog-breath
   - name: LIFT-182 Warp Pack
     category: supply
     type: Backpack
     code: [down, left, right, down, left, right]
+    icon: lift-182-warp-pack
   - name: M-103 Supply FRV
     category: supply
     type: Vehicle
     code: [left, down, left, left, down, up, right]
+    icon: m-103-supply-frv
   - name: TD-110 Maelstrom
     category: supply
     type: Vehicle
     code: [left, down, right, down, left, down, up, left, right]
+    icon: td-110-maelstrom
   - name: M-104 Incinerator FRV
     category: supply
     type: Vehicle
     code: [left, down, right, left, down, up, up]
+    icon: m-104-incinerator-frv
   - name: EXO-49 Emancipator Exosuit
     category: supply
     type: Vehicle
     code: [left, down, right, up, left, down, up]
+    icon: exo-49-emancipator-exosuit
   - name: EXO-45 Patriot Exosuit
     category: supply
     type: Vehicle
     code: [left, down, right, up, left, down, down]
+    icon: exo-45-patriot-exosuit
   - name: M-102 Gunner FRV
     category: supply
     type: Vehicle
     code: [left, down, right, down, right, down, up]
+    icon: m-102-gunner-frv
   - name: TD-220 Bastion MK XVI
     category: supply
     type: Vehicle
     code: [left, down, right, down, left, down, up, down, up]
+    icon: td-220-bastion-mk-xvi
   - name: EXO-55 Breakthrough Exosuit
     category: supply
     type: Vehicle
     code: [left, down, right, left, right, down, up]
+    icon: exo-55-breakthrough-exosuit
   - name: EXO-51 Lumberer Exosuit
     category: supply
     type: Vehicle
     code: [left, down, right, up, right, left, up]
+    icon: exo-51-lumberer-exosuit
   - name: A/MG-43 Machine Gun Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, right, up]
+    icon: a-mg-43-machine-gun-sentry
   - name: A/G-16 Gatling Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, left]
+    icon: a-g-16-gatling-sentry
   - name: A/AC-8 Autocannon Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, up, left, up]
+    icon: a-ac-8-autocannon-sentry
   - name: A/M-12 Mortar Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, right, down]
+    icon: a-m-12-mortar-sentry
   - name: A/MLS-4X Rocket Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, right, left]
+    icon: a-mls-4x-rocket-sentry
   - name: A/ARC-3 Tesla Tower
     category: defensive
     type: Sentry
     code: [down, up, right, up, left, right]
+    icon: a-arc-3-tesla-tower
   - name: A/M-23 EMS Mortar Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, down, right]
+    icon: a-m-23-ems-mortar-sentry
   - name: A/LAS-98 Laser Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, down, up, right]
+    icon: a-las-98-laser-sentry
   - name: A/FLAM-40 Flame Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, down, up, up]
+    icon: a-flam-40-flame-sentry
   - name: A/GM-17 Gas Mortar Sentry
     category: defensive
     type: Sentry
     code: [down, up, right, down, left]
+    icon: a-gm-17-gas-mortar-sentry
   - name: MD-6 Anti-Personnel Minefield
     category: defensive
     type: Emplacement
     code: [down, left, up, right]
+    icon: md-6-anti-personnel-minefield
   - name: MD-I4 Incendiary Mines
     category: defensive
     type: Emplacement
     code: [down, left, left, down]
+    icon: md-i4-incendiary-mines
   - name: MD-17 Anti-Tank Mines
     category: defensive
     type: Emplacement
     code: [down, left, up, up]
+    icon: md-17-anti-tank-mines
   - name: FX-12 Shield Generator Relay
     category: defensive
     type: Emplacement
     code: [down, down, left, right, left, right]
+    icon: fx-12-shield-generator-relay
   - name: E/MG-101 HMG Emplacement
     category: defensive
     type: Emplacement
     code: [down, up, left, right, right, left]
+    icon: e-mg-101-hmg-emplacement
   - name: E/GL-21 Grenadier Battlement
     category: defensive
     type: Emplacement
     code: [down, right, down, left, right]
+    icon: e-gl-21-grenadier-battlement
   - name: MD-8 Gas Mines
     category: defensive
     type: Emplacement
     code: [down, left, left, right]
+    icon: md-8-gas-mines
   - name: E/AT-12 Anti-Tank Emplacement
     category: defensive
     type: Emplacement
     code: [down, up, left, right, right, right]
+    icon: e-at-12-anti-tank-emplacement
   - name: Eagle Rearm
     category: mission
     type: Ship
     code: [up, up, left, up, right]
+    icon: eagle-rearm
   - name: Call In Super Destroyer
     category: mission
     type: Ship
     code: [up, up, down, down, left, right, left, right]
+    icon: call-in-super-destroyer
   - name: SoS Beacon
     category: mission
     type: Ship
     code: [up, down, right, up]
+    icon: sos-beacon
   - name: Reinforce
     category: mission
     type: Ship
     code: [up, down, right, left, up]
+    icon: reinforce
   - name: Resupply
     category: mission
     type: Ship
     code: [down, down, up, right]
+    icon: resupply
   - name: SSSD Delivery
     category: mission
     type: Objective
     code: [down, down, down, up, up]
+    icon: sssd-delivery
   - name: SEAF Artillery
     category: mission
     type: Objective
     code: [right, up, up, down]
+    icon: seaf-artillery
   - name: Hive Breaker Drill
     category: mission
     type: Objective
     code: [left, up, down, right, down, down]
+    icon: hive-breaker-drill
   - name: Portable Comms Relay
     category: mission
     type: Objective
     code: [up, up, down, down, left, left, down]
+    icon: portable-comms-relay
   - name: Tactical Video Camera
     category: mission
     type: Objective
     code: [right, down, down, up, left, left, up]
+    icon: tactical-video-camera
   - name: Upload Data
     category: mission
     type: Objective
     code: [left, right, up, up, up]
+    icon: upload-data
   - name: Seismic Probe
     category: mission
     type: Objective
     code: [up, up, left, right, down, down]
+    icon: seismic-probe
   - name: Super Earth Flag
     category: mission
     type: Objective
     code: [down, up, down, up]
+    icon: super-earth-flag
   - name: Cargo Container
     category: mission
     type: Objective
     code: [up, up, down, down, right, down]
+    icon: cargo-container
   - name: Dark Fluid Vessel
     category: mission
     type: Objective
     code: [up, left, right, down, up, up]
+    icon: dark-fluid-vessel
   - name: Activate E-711 Extraction Drill
     category: mission
     type: Objective
     code: [down, down, left, left, down, down]
+    icon: activate-e-711-extraction-drill
   - name: Prospecting Drill
     category: mission
     type: Objective
     code: [down, down, left, right, down, down]
+    icon: prospecting-drill
   - name: Aquifer Drill
     category: mission
     type: Objective
     code: [left, left, left, up, down, right, down, down]
+    icon: aquifer-drill
   - name: Reinforcement Pods
     category: mission
     type: Objective
     code: [left, right, up, up, up]
+    icon: reinforcement-pods
   - name: Tectonic Drill
     category: mission
     type: Objective
     code: [up, down, up, down, up, down]
+    icon: tectonic-drill
   - name: NUX-223 Hellbomb
     category: mission
     type: Objective
     code: [down, up, left, down, up, right, down, up]
+    icon: nux-223-hellbomb

@@ -19,7 +19,7 @@ func newTestModel(t *testing.T, layoutName string) model {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := NewModel(NewStyles(termenv.ANSI256), layout, stratagems)
+	m := NewModel(NewStyles(termenv.ANSI256, nil), layout, stratagems)
 	m.currentStratagem = testStratagem
 	return m
 }
