@@ -18,6 +18,10 @@ func main() {
 		"color mode, one of: %s (can also be set with %s)",
 		strings.Join(ColorModeNames(), ", "), COLOR_ENV_VAR,
 	))
+	stratagemsPath := flag.String("stratagems", os.Getenv(STRATAGEMS_ENV_VAR), fmt.Sprintf(
+		"YAML file with the stratagems to train on, defaults to the embedded list (can also be set with %s)",
+		STRATAGEMS_ENV_VAR,
+	))
 	flag.Parse()
 
 	layout, err := GetLayout(*layoutName)
@@ -32,8 +36,14 @@ func main() {
 		os.Exit(2)
 	}
 
+	stratagems, err := LoadStratagems(*stratagemsPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
 	styles := NewStyles(colorProfile)
-	model := NewModel(styles, layout)
+	model := NewModel(styles, layout, stratagems)
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

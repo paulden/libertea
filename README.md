@@ -87,12 +87,35 @@ Force a mode with the `-color` flag or the `LIBERTEA_COLOR` environment variable
 docker run -it -e "LIBERTEA_COLOR=256" ghcr.io/paulden/libertea:main
 ```
 
+### Stratagems
+
+The stratagems come from [`stratagems.yaml`](stratagems.yaml), embedded in the binary.
+To train on your own selection, write a file with the same format and pass it with the `-stratagems` flag
+or the `LIBERTEA_STRATAGEMS` environment variable:
+
+```yaml
+stratagems:
+  - name: Orbital Precision Strike
+    category: offensive # one of offensive, supply, defensive, mission
+    type: Orbital       # optional
+    code: [right, right, up]
+```
+
+```
+./libertea -stratagems my-loadout.yaml
+```
+
+To refresh the embedded list from the [Helldivers Wiki](https://helldivers.wiki.gg/wiki/Stratagems):
+
+```
+go run ./cmd/update-stratagems
+```
+
 ## Misc
 
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.
-- The list of stratagems was fetched from Helldivers [wiki](https://helldivers.wiki.gg/wiki/Stratagems).
+- The list of stratagems is generated from the Helldivers [wiki](https://helldivers.wiki.gg/wiki/Stratagems), whose content is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0).
 
 ## TODO
 
 - Improve styles
-- Extract stratagem list to YAML
