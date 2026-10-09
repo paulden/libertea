@@ -81,3 +81,20 @@ func TestNoCursorWithColors(t *testing.T) {
 func column(line, substr string) int {
 	return lipgloss.Width(line[:strings.Index(line, substr)])
 }
+
+func TestCategoryShownWithAndWithoutColors(t *testing.T) {
+	for _, profile := range []termenv.Profile{termenv.Ascii, termenv.ANSI, termenv.ANSI256, termenv.TrueColor} {
+		render := NewStyles(profile).FormatStratagem(testStratagem, 0, false, 0)
+		if !strings.Contains(render, "OFFENSIVE · ORBITAL") {
+			t.Errorf("profile %v: the category label should always be shown:\n%s", profile, render)
+		}
+	}
+}
+
+func TestEveryCategoryHasAColor(t *testing.T) {
+	for _, category := range CATEGORIES {
+		if _, ok := CATEGORY_COLORS[category]; !ok {
+			t.Errorf("category %q has no color", category)
+		}
+	}
+}
