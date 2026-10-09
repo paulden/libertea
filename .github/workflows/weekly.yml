@@ -1,0 +1,15 @@
+name: Weekly checks
+
+# Catches new vulnerabilities and toolchain breakages even when nothing is pushed.
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/checks.yml

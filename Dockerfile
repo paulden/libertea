@@ -1,5 +1,5 @@
 ## Build: cross-compile natively for the target platform, no emulation needed.
-FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.2-alpine@sha256:85dc1069ac644ea3c527b177303a406eb3358192816cd7f9e5848eb658851673 AS build
 
 ARG TARGETOS TARGETARCH
 ARG VERSION=dev
