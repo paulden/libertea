@@ -1,6 +1,6 @@
-// Command update-stratagems regenerates stratagems.yaml from the Helldivers Wiki.
+// Command update-stratagems regenerates the embedded stratagems and icons from the Helldivers Wiki.
 //
-// Usage: go run ./cmd/update-stratagems [-o stratagems.yaml] [-icons icons]
+// Usage: go run ./cmd/update-stratagems [-o internal/stratagem/stratagems.yaml] [-icons internal/stratagem/icons]
 //
 // Icons are converted to 128x128 PNG files with rsvg-convert, which must be
 // installed (librsvg).
@@ -76,8 +76,8 @@ type stratagem struct {
 }
 
 func main() {
-	output := flag.String("o", "stratagems.yaml", "output file")
-	iconsDir := flag.String("icons", "icons", "directory where icons are written, empty to skip them")
+	output := flag.String("o", "internal/stratagem/stratagems.yaml", "output file")
+	iconsDir := flag.String("icons", "internal/stratagem/icons", "directory where icons are written, empty to skip them")
 	flag.Parse()
 
 	page, err := fetchPage()

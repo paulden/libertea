@@ -1,4 +1,4 @@
-package main
+package terminal
 
 import (
 	"encoding/base64"
@@ -7,33 +7,13 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
-
-func TestEveryEmbeddedStratagemHasAnIcon(t *testing.T) {
-	stratagems, err := LoadStratagems("")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, s := range stratagems {
-		if !HasIcon(s.icon) {
-			t.Errorf("%s: icon %q is missing", s.name, s.icon)
-		}
-	}
-}
-
-func TestUnknownIcon(t *testing.T) {
-	_, err := ParseStratagems([]byte("stratagems:\n  - name: A\n    category: mission\n    code: [up]\n    icon: ../../etc/passwd\n"))
-	if err == nil {
-		t.Error("an unknown icon should return an error")
-	}
-}
 
 func TestIconPlaceholder(t *testing.T) {
 	placeholder := IconPlaceholder(0x010203)
 
-	if lipgloss.Width(placeholder) != iconColumns || lipgloss.Height(placeholder) != iconRows {
-		t.Errorf("placeholder should be %dx%d cells, got %dx%d", iconColumns, iconRows, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
+	if lipgloss.Width(placeholder) != IconColumns || lipgloss.Height(placeholder) != IconRows {
+		t.Errorf("placeholder should be %dx%d cells, got %dx%d", IconColumns, IconRows, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
 	}
 
 	lines := strings.Split(placeholder, "\n")
@@ -82,26 +62,6 @@ func TestTransmitCommands(t *testing.T) {
 	}
 }
 
-func TestTransmitIconsAssignsOneIdPerIcon(t *testing.T) {
-	stratagems := []stratagem{
-		{name: "A", icon: "reinforce"},
-		{name: "B", icon: "resupply"},
-		{name: "C", icon: "reinforce"},
-		{name: "D"},
-	}
-	var out strings.Builder
-	ids, err := TransmitIcons(&out, stratagems)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(ids) != 2 || ids["reinforce"] != 1 || ids["resupply"] != 2 {
-		t.Errorf("unexpected ids: %v", ids)
-	}
-	if strings.Count(out.String(), "a=p,U=1") != 2 {
-		t.Error("each icon should be transmitted once")
-	}
-}
-
 func TestParseQueryResponse(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -138,24 +98,5 @@ func TestResolveIconsMode(t *testing.T) {
 	}
 	if _, err := ResolveIconsMode("sixel", true); err == nil {
 		t.Error("unknown mode should return an error")
-	}
-}
-
-func TestIconShownNextToTheStratagem(t *testing.T) {
-	withIcon := testStratagem
-	withIcon.icon = "orbital-gatling-barrage"
-
-	for _, ids := range []map[string]int{nil, {"orbital-gatling-barrage": 3}} {
-		render := NewStyles(termenv.TrueColor, ids).FormatStratagem(withIcon, 0, false, 0)
-		shown := strings.ContainsRune(render, kittyPlaceholder)
-		if shown != (ids != nil) {
-			t.Errorf("ids %v: icon shown = %v", ids, shown)
-		}
-		if !strings.Contains(render, "Test Stratagem") {
-			t.Errorf("ids %v: the name should always be shown", ids)
-		}
-		if lipgloss.Width(render) > stratagemWidth+1 {
-			t.Errorf("ids %v: render is too wide (%d)", ids, lipgloss.Width(render))
-		}
 	}
 }
