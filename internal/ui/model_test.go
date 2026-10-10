@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,7 +27,23 @@ func newTestModel(t *testing.T, layoutName string) Model {
 	}
 	m := NewModel(NewStyles(termenv.ANSI256, nil), layout, stratagems)
 	m.currentStratagem = testStratagem
+	m.now = newFakeClock().now
 	return m
+}
+
+// fakeClock moves forward by step each time it is read.
+type fakeClock struct {
+	current time.Time
+	step    time.Duration
+}
+
+func newFakeClock() *fakeClock {
+	return &fakeClock{current: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), step: 100 * time.Millisecond}
+}
+
+func (c *fakeClock) now() time.Time {
+	c.current = c.current.Add(c.step)
+	return c.current
 }
 
 func press(m Model, keys ...tea.KeyMsg) Model {
@@ -62,6 +79,25 @@ func TestCompleteStratagemWithArrows(t *testing.T) {
 	}
 	if m.stats.lastTime == 0 || m.stats.bestTime == 0 {
 		t.Errorf("times should be recorded: %+v", m.stats)
+	}
+}
+
+func TestTimesAreMeasuredFromTheFirstKey(t *testing.T) {
+	m := newTestModel(t, "arrows")
+	clock := newFakeClock()
+	m.now = clock.now
+
+	// The clock is read on the first and the last key.
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if m.stats.lastTime != clock.step || m.stats.bestTime != clock.step {
+		t.Errorf("got last %v and best %v, want %v", m.stats.lastTime, m.stats.bestTime, clock.step)
+	}
+
+	clock.step = 300 * time.Millisecond
+	m.currentStratagem = testStratagem
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if m.stats.lastTime != 300*time.Millisecond || m.stats.bestTime != 100*time.Millisecond {
+		t.Errorf("a slower stratagem should not change the best time, got last %v and best %v", m.stats.lastTime, m.stats.bestTime)
 	}
 }
 

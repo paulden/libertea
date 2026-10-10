@@ -38,6 +38,8 @@ type Model struct {
 	// Terminal size, used to center the game. Zero until bubbletea reports it.
 	width  int
 	height int
+	// now is time.Now, replaced in tests to control the measured times.
+	now func() time.Time
 }
 
 func NewModel(styles Styles, layout keys.Layout, stratagems []stratagem.Stratagem) Model {
@@ -46,6 +48,7 @@ func NewModel(styles Styles, layout keys.Layout, stratagems []stratagem.Stratage
 		currentStratagem: stratagem.Random(stratagems, ""),
 		layout:           layout,
 		styles:           styles,
+		now:              time.Now,
 	}
 }
 
@@ -81,7 +84,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.stratagemStart.IsZero() {
-			m.stratagemStart = time.Now()
+			m.stratagemStart = m.now()
 		}
 
 		if direction != m.currentStratagem.Code[m.stratagemCompletion] {
@@ -103,7 +106,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) completeStratagem() {
-	elapsed := time.Since(m.stratagemStart)
+	elapsed := m.now().Sub(m.stratagemStart)
 
 	m.stats.successes++
 	m.stats.streak++
