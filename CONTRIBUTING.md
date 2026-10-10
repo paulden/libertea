@@ -38,6 +38,20 @@ Pull requests run the same checks in CI, plus `go mod tidy -diff`, `govulncheck`
 
 `Checks` and `Image` are reusable workflows called by the ones above.
 
+## README demos
+
+The GIFs in [`docs/demo`](docs/demo) are recorded in a real kitty terminal, so that the icons are shown:
+kitty runs in a virtual X server, `xdotool` types the keys and `ffmpeg` records the screen.
+Record them again when the screen changes, from the repository root:
+
+```
+docker build -f docs/demo/Dockerfile -t libertea-demo .
+docker run --rm -v "$PWD/docs/demo:/out" libertea-demo
+```
+
+The scenarios are in [`docs/demo/record.sh`](docs/demo/record.sh). Each one trains on a single stratagem,
+so that the typed keys always match the asked code.
+
 ## Releasing
 
 Tag the commit on `main` and push the tag:
@@ -61,10 +75,10 @@ The Renovate GitHub app must be installed on the repository.
 
 | Group | Files | Update |
 |-------|-------|--------|
-| Go toolchain | `go.mod` (`toolchain`), `Dockerfile`, `.tool-versions` | one pull request for the three files |
+| Go toolchain | `go.mod` (`toolchain`), `Dockerfile`, `docs/demo/Dockerfile`, `.tool-versions` | one pull request for all the files |
 | Go modules | `go.mod`, `go.sum` | minor and patch grouped, majors one by one |
 | GitHub Actions | `.github/workflows/*.yml` | pinned by commit digest |
-| Base image | `Dockerfile`, `goreleaser.Dockerfile` | pinned by digest |
+| Base image | `Dockerfile`, `goreleaser.Dockerfile`, `docs/demo/Dockerfile` | pinned by digest |
 
 The `go` directive in `go.mod` is the oldest Go release still supported upstream.
 It is not updated by Renovate: raise it by hand when a Go release reaches its end of life,

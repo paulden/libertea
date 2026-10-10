@@ -1,0 +1,6 @@
+stratagems:
+  - name: EAT-17 Expendable Anti-Tank
+    category: supply
+    type: Support Weapon
+    code: [down, down, left, up, right]
+    icon: eat-17-expendable-anti-tank
