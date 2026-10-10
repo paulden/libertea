@@ -37,11 +37,11 @@ dockers_v2:
     platforms:
       - linux/amd64
       - linux/arm64
+    # `latest` follows the main branch, see .github/workflows/image.yml.
     tags:
       - "{{ .Version }}"
       - "{{ if not .Prerelease }}{{ .Major }}.{{ .Minor }}{{ end }}"
       - "{{ if not .Prerelease }}{{ .Major }}{{ end }}"
-      - "{{ if not .Prerelease }}latest{{ end }}"
     labels:
       org.opencontainers.image.title: "{{ .ProjectName }}"
       org.opencontainers.image.description: "TUI stratagem hero to train your Helldivers 2 stratagem codes"
@@ -49,8 +49,11 @@ dockers_v2:
       org.opencontainers.image.version: "{{ .Version }}"
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.created: "{{ .Date }}"
+    # Provenance is attested by GitHub in release.yml: in-manifest attestations would show up
+    # as unknown/unknown platforms in the package page.
+    sbom: false
     flags:
-      - --provenance=mode=max
+      - --provenance=false
 
 checksum:
   name_template: checksums.txt
@@ -63,6 +66,8 @@ changelog:
       - "^test:"
 
 release:
+  # Tags such as v1.3.0-rc.1 are published as pre-releases and never become the latest release.
+  prerelease: auto
   footer: >-
 
     ---

@@ -17,9 +17,10 @@ Pull requests run the same checks in CI, plus `go mod tidy -diff`, `govulncheck`
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
-| `CI` | pull requests, pushes to `main` | Checks, then builds the image. Pushes `ghcr.io/paulden/libertea:main` from `main` only. |
+| `CI` | pull requests, pushes to `main` | Checks, then builds the image. Pushes `ghcr.io/paulden/libertea:main`, `:latest` and `:sha-<commit>` from `main` only. |
 | `Release` | `v*` tags | Checks, then publishes binaries and multi-platform images with GoReleaser. |
 | `Weekly checks` | every Monday | Runs the checks to catch new vulnerabilities when nothing is pushed. |
+| `Image cleanup` | every Monday, manual | Deletes untagged images and keeps the 10 newest `sha-*` images. Manual runs are dry runs by default. |
 
 `Checks` and `Image` are reusable workflows called by the ones above.
 
@@ -32,7 +33,10 @@ git tag -a v1.2.3 -m "v1.2.3"
 git push origin v1.2.3
 ```
 
-The image gets the tags `1.2.3`, `1.2`, `1` and `latest`. Pre-releases such as `v1.3.0-rc.1` only get their own tag.
+The image gets the tags `1.2.3`, `1.2` and `1`, `latest` follows `main`.
+Pre-releases such as `v1.3.0-rc.1` only get their own image tag, and are published as GitHub pre-releases.
+
+Binaries and images come with build provenance attestations stored by GitHub, see `gh attestation verify` in the README.
 
 ## Dependency updates
 

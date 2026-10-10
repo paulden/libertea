@@ -21,8 +21,9 @@ docker run --rm -it -e TERM -e COLORTERM ghcr.io/paulden/libertea
 
 | Tag | Content |
 |-----|---------|
-| `latest`, `1`, `1.2`, `1.2.3` | Releases |
-| `main` | Latest commit on the `main` branch |
+| `latest`, `main` | Latest commit on the `main` branch |
+| `1`, `1.2`, `1.2.3` | Releases |
+| `sha-<commit>` | A commit on the `main` branch, the 10 most recent are kept |
 
 ### Binary
 
@@ -38,10 +39,11 @@ tar xzf "libertea_${OS}_${ARCH}.tar.gz" libertea
 sudo install libertea /usr/local/bin/
 ```
 
-Archives come with build provenance attestations. To check where an archive was built, with the [GitHub CLI](https://cli.github.com/):
+Archives and images come with build provenance attestations. To check where they were built, with the [GitHub CLI](https://cli.github.com/):
 
 ```
 gh attestation verify "libertea_${OS}_${ARCH}.tar.gz" --repo paulden/libertea
+gh attestation verify oci://ghcr.io/paulden/libertea:latest --repo paulden/libertea
 ```
 
 ### Go

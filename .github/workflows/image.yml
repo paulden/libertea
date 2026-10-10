@@ -1,6 +1,6 @@
 name: Image
 
-# Reusable multi-platform image build, pushed as ghcr.io/<repository>:main from the main branch.
+# Reusable multi-platform image build, pushed as ghcr.io/<repository>:main and :latest from the main branch.
 # Release images are published by GoReleaser, see release.yml.
 on:
   workflow_call:
@@ -50,6 +50,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-
 
       - name: Build${{ inputs.push && ' and push' || '' }}
@@ -67,6 +68,10 @@ jobs:
             DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Provenance is attested by GitHub below: in-manifest attestations would show up
+          # as unknown/unknown platforms in the package page.
+          provenance: false
+          sbom: false
 
       - name: Attest build provenance
         if: inputs.push
@@ -74,4 +79,5 @@ jobs:
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
+          # Stored by GitHub only, pushing it would add a sha256-<digest> tag for each image.
+          push-to-registry: false
