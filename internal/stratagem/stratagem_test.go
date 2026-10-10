@@ -1,4 +1,4 @@
-package main
+package stratagem
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestEmbeddedStratagemsAreValid(t *testing.T) {
-	stratagems, err := LoadStratagems("")
+	stratagems, err := Load("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -16,19 +16,19 @@ func TestEmbeddedStratagemsAreValid(t *testing.T) {
 		t.Errorf("expected the full wiki list, got %d stratagems", len(stratagems))
 	}
 
-	categories := map[string]int{}
+	counts := map[string]int{}
 	for _, s := range stratagems {
-		categories[s.category]++
+		counts[s.Category]++
 	}
-	for _, category := range CATEGORIES {
-		if categories[category] == 0 {
+	for _, category := range Categories {
+		if counts[category] == 0 {
 			t.Errorf("no stratagem in category %q", category)
 		}
 	}
 }
 
-func TestParseStratagems(t *testing.T) {
-	stratagems, err := ParseStratagems([]byte(`
+func TestParse(t *testing.T) {
+	stratagems, err := Parse([]byte(`
 stratagems:
   - name: Reinforce
     category: mission
@@ -38,9 +38,9 @@ stratagems:
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := stratagem{name: "Reinforce", category: "mission", kind: "Ship", code: []rune{'u', 'd', 'r', 'l', 'u'}}
-	if len(stratagems) != 1 || stratagems[0].name != want.name || stratagems[0].category != want.category ||
-		stratagems[0].kind != want.kind || string(stratagems[0].code) != string(want.code) {
+	want := Stratagem{Name: "Reinforce", Category: "mission", Kind: "Ship", Code: []rune{'u', 'd', 'r', 'l', 'u'}}
+	if len(stratagems) != 1 || stratagems[0].Name != want.Name || stratagems[0].Category != want.Category ||
+		stratagems[0].Kind != want.Kind || string(stratagems[0].Code) != string(want.Code) {
 		t.Errorf("got %+v, want %+v", stratagems, want)
 	}
 }
@@ -58,7 +58,7 @@ func TestParseInvalidStratagems(t *testing.T) {
 	}
 	for name, data := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, err := ParseStratagems([]byte(data)); err == nil {
+			if _, err := Parse([]byte(data)); err == nil {
 				t.Error("expected an error")
 			}
 		})
@@ -72,21 +72,55 @@ func TestLoadStratagemsFromFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stratagems, err := LoadStratagems(path)
+	stratagems, err := Load(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(stratagems) != 1 || stratagems[0].name != "Custom" {
+	if len(stratagems) != 1 || stratagems[0].Name != "Custom" {
 		t.Errorf("unexpected stratagems: %+v", stratagems)
 	}
 
-	if _, err := LoadStratagems(filepath.Join(t.TempDir(), "missing.yaml")); err == nil {
+	if _, err := Load(filepath.Join(t.TempDir(), "missing.yaml")); err == nil {
 		t.Error("a missing file should return an error")
 	}
 	if err := os.WriteFile(path, []byte("stratagems: []"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := LoadStratagems(path); err == nil || !strings.Contains(err.Error(), path) {
+	if _, err := Load(path); err == nil || !strings.Contains(err.Error(), path) {
 		t.Errorf("errors should mention the file path, got %v", err)
+	}
+}
+
+func TestEveryEmbeddedStratagemHasAnIcon(t *testing.T) {
+	stratagems, err := Load("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range stratagems {
+		if !HasIcon(s.Icon) {
+			t.Errorf("%s: icon %q is missing", s.Name, s.Icon)
+		}
+		if _, err := Icon(s.Icon); err != nil {
+			t.Errorf("%s: %v", s.Name, err)
+		}
+	}
+}
+
+func TestUnknownIcon(t *testing.T) {
+	_, err := Parse([]byte("stratagems:\n  - name: A\n    category: mission\n    code: [up]\n    icon: ../../etc/passwd\n"))
+	if err == nil {
+		t.Error("an unknown icon should return an error")
+	}
+}
+
+func TestRandomNeverRepeatsTheExcludedStratagem(t *testing.T) {
+	stratagems := []Stratagem{{Name: "A"}, {Name: "B"}}
+	for range 100 {
+		if Random(stratagems, "A").Name != "B" {
+			t.Fatal("the excluded stratagem should not be picked")
+		}
+	}
+	if Random(stratagems[:1], "A").Name != "A" {
+		t.Error("a single stratagem should be picked even when excluded")
 	}
 }

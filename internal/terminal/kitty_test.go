@@ -1,4 +1,4 @@
-package main
+package terminal
 
 import (
 	"encoding/base64"
@@ -7,33 +7,13 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
 )
-
-func TestEveryEmbeddedStratagemHasAnIcon(t *testing.T) {
-	stratagems, err := LoadStratagems("")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, s := range stratagems {
-		if !HasIcon(s.icon) {
-			t.Errorf("%s: icon %q is missing", s.name, s.icon)
-		}
-	}
-}
-
-func TestUnknownIcon(t *testing.T) {
-	_, err := ParseStratagems([]byte("stratagems:\n  - name: A\n    category: mission\n    code: [up]\n    icon: ../../etc/passwd\n"))
-	if err == nil {
-		t.Error("an unknown icon should return an error")
-	}
-}
 
 func TestIconPlaceholder(t *testing.T) {
 	placeholder := IconPlaceholder(0x010203)
 
-	if lipgloss.Width(placeholder) != ICON_COLUMNS || lipgloss.Height(placeholder) != ICON_ROWS {
-		t.Errorf("placeholder should be %dx%d cells, got %dx%d", ICON_COLUMNS, ICON_ROWS, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
+	if lipgloss.Width(placeholder) != IconColumns || lipgloss.Height(placeholder) != IconRows {
+		t.Errorf("placeholder should be %dx%d cells, got %dx%d", IconColumns, IconRows, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
 	}
 
 	lines := strings.Split(placeholder, "\n")
@@ -41,9 +21,9 @@ func TestIconPlaceholder(t *testing.T) {
 		if !strings.HasPrefix(line, "\x1b[38;2;1;2;3m") {
 			t.Errorf("row %d: the image id should be encoded in the foreground color: %q", row, line)
 		}
-		cells := strings.Split(strings.TrimSuffix(strings.TrimPrefix(line, "\x1b[38;2;1;2;3m"), "\x1b[39m"), string(KITTY_PLACEHOLDER))[1:]
+		cells := strings.Split(strings.TrimSuffix(strings.TrimPrefix(line, "\x1b[38;2;1;2;3m"), "\x1b[39m"), string(kittyPlaceholder))[1:]
 		for column, cell := range cells {
-			want := string([]rune{KITTY_DIACRITICS[row], KITTY_DIACRITICS[column]})
+			want := string([]rune{kittyDiacritics[row], kittyDiacritics[column]})
 			if cell != want {
 				t.Errorf("cell %d,%d: got diacritics %q, want %q", row, column, cell, want)
 			}
@@ -65,8 +45,8 @@ func TestTransmitCommands(t *testing.T) {
 	}
 	var payload string
 	for _, chunk := range chunks[:3] {
-		if len(chunk[2]) > KITTY_CHUNK_SIZE {
-			t.Errorf("chunk larger than %d bytes: %d", KITTY_CHUNK_SIZE, len(chunk[2]))
+		if len(chunk[2]) > kittyChunkSize {
+			t.Errorf("chunk larger than %d bytes: %d", kittyChunkSize, len(chunk[2]))
 		}
 		payload += chunk[2]
 	}
@@ -79,26 +59,6 @@ func TestTransmitCommands(t *testing.T) {
 
 	if chunks[3][1] != "a=p,U=1,i=7,c=12,r=6,q=2" {
 		t.Errorf("unexpected placement: %q", chunks[3][1])
-	}
-}
-
-func TestTransmitIconsAssignsOneIdPerIcon(t *testing.T) {
-	stratagems := []stratagem{
-		{name: "A", icon: "reinforce"},
-		{name: "B", icon: "resupply"},
-		{name: "C", icon: "reinforce"},
-		{name: "D"},
-	}
-	var out strings.Builder
-	ids, err := TransmitIcons(&out, stratagems)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(ids) != 2 || ids["reinforce"] != 1 || ids["resupply"] != 2 {
-		t.Errorf("unexpected ids: %v", ids)
-	}
-	if strings.Count(out.String(), "a=p,U=1") != 2 {
-		t.Error("each icon should be transmitted once")
 	}
 }
 
@@ -138,24 +98,5 @@ func TestResolveIconsMode(t *testing.T) {
 	}
 	if _, err := ResolveIconsMode("sixel", true); err == nil {
 		t.Error("unknown mode should return an error")
-	}
-}
-
-func TestIconShownNextToTheStratagem(t *testing.T) {
-	withIcon := testStratagem
-	withIcon.icon = "orbital-gatling-barrage"
-
-	for _, ids := range []map[string]int{nil, {"orbital-gatling-barrage": 3}} {
-		render := NewStyles(termenv.TrueColor, ids).FormatStratagem(withIcon, 0, false, 0)
-		shown := strings.ContainsRune(render, KITTY_PLACEHOLDER)
-		if shown != (ids != nil) {
-			t.Errorf("ids %v: icon shown = %v", ids, shown)
-		}
-		if !strings.Contains(render, "Test Stratagem") {
-			t.Errorf("ids %v: the name should always be shown", ids)
-		}
-		if lipgloss.Width(render) > STRATAGEM_WIDTH+1 {
-			t.Errorf("ids %v: render is too wide (%d)", ids, lipgloss.Width(render))
-		}
 	}
 }

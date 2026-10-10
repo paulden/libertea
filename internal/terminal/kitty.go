@@ -1,11 +1,9 @@
-package main
+package terminal
 
 import (
-	"embed"
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -14,54 +12,39 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
-// Stratagem icons are hand traced from the game assets by Dogo314 for the
-// Helldivers Wiki, see icons/README.md. They are generated with
-// `go run ./cmd/update-stratagems`.
-//
-//go:embed icons/*.png
-var iconFiles embed.FS
-
 // Icons are displayed with the kitty graphics protocol and its Unicode
 // placeholders: images are transmitted once, then drawn with regular text
 // cells that bubbletea can render and redraw like any other character.
 // See https://sw.kovidgoyal.net/kitty/graphics-protocol/#unicode-placeholders
 const (
-	ICON_COLUMNS       = 12
-	ICON_ROWS          = 6
-	ICONS_ENV_VAR      = "LIBERTEA_ICONS"
-	DEFAULT_ICONS_MODE = "auto"
+	// Size of the icons, in cells.
+	IconColumns = 12
+	IconRows    = 6
 
-	KITTY_PLACEHOLDER = '\U0010EEEE'
-	KITTY_CHUNK_SIZE  = 4096
-	KITTY_QUERY       = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\"
-	KITTY_QUERY_OK    = "\x1b_Gi=31;OK\x1b\\"
-	DEVICE_ATTRIBUTES = "\x1b[c"
-	QUERY_TIMEOUT     = time.Second
+	DefaultIconsMode = "auto"
 
-	ENTER_ALT_SCREEN = "\x1b[?1049h\x1b[H"
-	EXIT_ALT_SCREEN  = "\x1b[?1049l"
+	kittyPlaceholder = '\U0010EEEE'
+	kittyChunkSize   = 4096
+	kittyQuery       = "\x1b_Gi=31,s=1,v=1,a=q,t=d,f=24;AAAA\x1b\\"
+	kittyQueryOK     = "\x1b_Gi=31;OK\x1b\\"
+	deviceAttributes = "\x1b[c"
+	queryTimeout     = time.Second
+
+	EnterAltScreen = "\x1b[?1049h\x1b[H"
+	ExitAltScreen  = "\x1b[?1049l"
 	// Delete every image and free its data.
-	DELETE_IMAGES = "\x1b_Ga=d,d=A,q=2\x1b\\"
+	DeleteImages = "\x1b_Ga=d,d=A,q=2\x1b\\"
 )
 
 // Combining characters encoding row and column numbers, from
 // https://sw.kovidgoyal.net/kitty/_downloads/f0a0de9ec8d9ff4456206db8e0814937/rowcolumn-diacritics.txt
-var KITTY_DIACRITICS = []rune{
+var kittyDiacritics = []rune{
 	'̅', '̍', '̎', '̐', '̒', '̽', '̾', '̿',
 	'͆', '͊', '͋', '͌', '͐', '͑', '͒', '͗',
 }
 
 func IconsModeNames() []string {
-	return []string{DEFAULT_ICONS_MODE, "kitty", "none"}
-}
-
-func iconPath(icon string) string {
-	return "icons/" + icon + ".png"
-}
-
-func HasIcon(icon string) bool {
-	_, err := fs.Stat(iconFiles, iconPath(icon))
-	return err == nil
+	return []string{DefaultIconsMode, "kitty", "none"}
 }
 
 // ResolveIconsMode tells whether icons can be displayed. The "auto" mode asks
@@ -72,11 +55,11 @@ func ResolveIconsMode(mode string, isTTY bool) (bool, error) {
 		return false, nil
 	case "kitty":
 		return true, nil
-	case DEFAULT_ICONS_MODE:
+	case DefaultIconsMode:
 		if !isTTY || !term.IsTerminal(os.Stdin.Fd()) {
 			return false, nil
 		}
-		return queryKittyGraphics(os.Stdin, os.Stdout, QUERY_TIMEOUT), nil
+		return queryKittyGraphics(os.Stdin, os.Stdout, queryTimeout), nil
 	default:
 		return false, fmt.Errorf("unknown icons mode %q, expected one of: %s", mode, strings.Join(IconsModeNames(), ", "))
 	}
@@ -98,7 +81,7 @@ func queryKittyGraphics(in, out *os.File, timeout time.Duration) bool {
 	}
 	defer reader.Close()
 
-	if _, err := io.WriteString(out, KITTY_QUERY+DEVICE_ATTRIBUTES); err != nil {
+	if _, err := io.WriteString(out, kittyQuery+deviceAttributes); err != nil {
 		return false
 	}
 
@@ -133,29 +116,7 @@ func ParseQueryResponse(response string) (supported bool, done bool) {
 	if start == -1 || !strings.Contains(response[start:], "c") {
 		return false, false
 	}
-	return strings.Contains(response[:start], KITTY_QUERY_OK), true
-}
-
-// TransmitIcons sends the icons of the stratagems to the terminal, and
-// returns the image id assigned to each icon.
-func TransmitIcons(w io.Writer, stratagems []stratagem) (map[string]int, error) {
-	ids := map[string]int{}
-	for _, s := range stratagems {
-		if s.icon == "" || ids[s.icon] != 0 {
-			continue
-		}
-		data, err := iconFiles.ReadFile(iconPath(s.icon))
-		if err != nil {
-			return nil, err
-		}
-
-		id := len(ids) + 1
-		if _, err := io.WriteString(w, TransmitCommands(id, data)); err != nil {
-			return nil, err
-		}
-		ids[s.icon] = id
-	}
-	return ids, nil
+	return strings.Contains(response[:start], kittyQueryOK), true
 }
 
 // TransmitCommands builds the escape sequences that upload a PNG image and
@@ -165,8 +126,8 @@ func TransmitCommands(id int, png []byte) string {
 	var b strings.Builder
 	payload := base64.StdEncoding.EncodeToString(png)
 
-	for offset := 0; offset < len(payload); offset += KITTY_CHUNK_SIZE {
-		end := min(offset+KITTY_CHUNK_SIZE, len(payload))
+	for offset := 0; offset < len(payload); offset += kittyChunkSize {
+		end := min(offset+kittyChunkSize, len(payload))
 		more := 0
 		if end < len(payload) {
 			more = 1
@@ -178,7 +139,7 @@ func TransmitCommands(id int, png []byte) string {
 		}
 	}
 
-	fmt.Fprintf(&b, "\x1b_Ga=p,U=1,i=%d,c=%d,r=%d,q=2\x1b\\", id, ICON_COLUMNS, ICON_ROWS)
+	fmt.Fprintf(&b, "\x1b_Ga=p,U=1,i=%d,c=%d,r=%d,q=2\x1b\\", id, IconColumns, IconRows)
 	return b.String()
 }
 
@@ -187,14 +148,14 @@ func TransmitCommands(id int, png []byte) string {
 func IconPlaceholder(id int) string {
 	color := fmt.Sprintf("\x1b[38;2;%d;%d;%dm", (id>>16)&0xFF, (id>>8)&0xFF, id&0xFF)
 
-	lines := make([]string, ICON_ROWS)
-	for row := range ICON_ROWS {
+	lines := make([]string, IconRows)
+	for row := range IconRows {
 		var line strings.Builder
 		line.WriteString(color)
-		for column := range ICON_COLUMNS {
-			line.WriteRune(KITTY_PLACEHOLDER)
-			line.WriteRune(KITTY_DIACRITICS[row])
-			line.WriteRune(KITTY_DIACRITICS[column])
+		for column := range IconColumns {
+			line.WriteRune(kittyPlaceholder)
+			line.WriteRune(kittyDiacritics[row])
+			line.WriteRune(kittyDiacritics[column])
 		}
 		line.WriteString("\x1b[39m")
 		lines[row] = line.String()
