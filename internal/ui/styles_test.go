@@ -139,6 +139,7 @@ func TestTimesComparedToTheBest(t *testing.T) {
 		{"no time yet", stats{}, "LAST -    BEST -"},
 		{"slower than the best", stats{lastTime: 1420 * time.Millisecond, bestTime: 1180 * time.Millisecond}, "LAST 1.42s  ▲0.24    BEST 1.18s"},
 		{"new best", stats{lastTime: time.Second, bestTime: time.Second, newBest: true}, "LAST 1.00s  NEW BEST    BEST 1.00s"},
+		{"as fast as the best", stats{lastTime: 1003 * time.Millisecond, bestTime: time.Second}, "LAST 1.00s    BEST 1.00s"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -211,5 +212,19 @@ func TestNoticeWithoutColors(t *testing.T) {
 	}
 	if notice := NewStyles(termenv.ANSI, nil).FormatNotice(); notice != "" {
 		t.Errorf("no notice expected with colors, got %q", notice)
+	}
+}
+
+func TestStratagemDoesNotMoveDuringThePenalty(t *testing.T) {
+	for _, ids := range []map[string]int{nil, {"orbital-gatling-barrage": 3}} {
+		styles := NewStyles(termenv.Ascii, ids)
+		strat := testStratagem
+		strat.Icon = "orbital-gatling-barrage"
+
+		playing := strings.Split(styles.FormatStratagem(strat, 0, false, 0), "\n")
+		blocked := strings.Split(styles.FormatStratagem(strat, 0, true, penaltyDuration), "\n")
+		if column(playing[2], "┌") != column(blocked[2], "┌") {
+			t.Errorf("ids %v: the strip moved from column %d to %d", ids, column(playing[2], "┌"), column(blocked[2], "┌"))
+		}
 	}
 }

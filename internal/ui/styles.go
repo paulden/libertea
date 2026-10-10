@@ -26,7 +26,12 @@ const (
 	textColumn     = margin + terminal.IconColumns + iconGap
 	textWidth      = innerWidth - textColumn - margin
 	penaltyBarSize = 24
-	sparklineSize  = 10
+	// The penalty line is the bar followed by the remaining time, "  1.4s".
+	penaltyLineWidth = penaltyBarSize + 6
+	// Differences with the best time are shown with two decimals: smaller
+	// ones would be displayed as ▲0.00.
+	shownDifference = 10 * time.Millisecond
+	sparklineSize   = 10
 )
 
 // Colors are given explicitly for each profile: the automatic downgrade of hex
@@ -178,8 +183,10 @@ func (s styles) FormatStratagem(strat stratagem.Stratagem, completion int, isBlo
 	if icon == "" {
 		// Without icon, the text block is centered in the screen. Its lines
 		// are padded to the same width first, so that the cursor stays under
-		// its arrow: PlaceHorizontal centers each line on its own.
-		block := s.base.Width(lipgloss.Width(text)).Render(text)
+		// its arrow: PlaceHorizontal centers each line on its own. The width
+		// includes the penalty line, so that the block does not move when it
+		// appears.
+		block := s.base.Width(max(lipgloss.Width(text), penaltyLineWidth)).Render(text)
 		return lipgloss.PlaceHorizontal(innerWidth, lipgloss.Center, block)
 	}
 	return indent(lipgloss.JoinHorizontal(lipgloss.Top, icon, strings.Repeat(" ", iconGap), s.base.Width(textWidth).Render(text)))
@@ -253,7 +260,7 @@ func (s styles) FormatTimes(stats stats, isBlocked bool) string {
 	switch {
 	case stats.newBest:
 		line += "  " + s.valid.Render("NEW BEST")
-	case stats.lastTime > stats.bestTime:
+	case stats.lastTime-stats.bestTime >= shownDifference:
 		line += "  " + s.dimError.Render(fmt.Sprintf("▲%.2f", (stats.lastTime-stats.bestTime).Seconds()))
 	}
 	line += s.dim.Render("    BEST ") + s.text.Render(formatDuration(stats.bestTime))
