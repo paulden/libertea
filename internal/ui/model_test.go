@@ -192,3 +192,48 @@ func TestViewInASmallTerminal(t *testing.T) {
 		t.Error("the screen should be left untouched when the terminal is too small")
 	}
 }
+
+func TestNewBestAndRecentTimes(t *testing.T) {
+	m := newTestModel(t, "arrows")
+	clock := newFakeClock()
+	m.now = clock.now
+
+	for i := range sparklineSize + 2 {
+		m.currentStratagem = testStratagem
+		m = press(m, keyUp, keyDown, keyLeft, keyRight)
+		if m.stats.newBest {
+			t.Errorf("success %d: a time equal to the best is not a new best", i+1)
+		}
+	}
+	if len(m.stats.recentTimes) != sparklineSize {
+		t.Errorf("the sparkline should keep the last %d times, got %d", sparklineSize, len(m.stats.recentTimes))
+	}
+
+	clock.step = 50 * time.Millisecond
+	m.currentStratagem = testStratagem
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if !m.stats.newBest || m.stats.bestTime != 50*time.Millisecond {
+		t.Errorf("a faster time should be a new best: %+v", m.stats)
+	}
+	if last := m.stats.recentTimes[len(m.stats.recentTimes)-1]; last != 50*time.Millisecond {
+		t.Errorf("the last time should be at the end of the sparkline, got %v", last)
+	}
+}
+
+func TestScreenKeepsItsSizeInEveryState(t *testing.T) {
+	for _, profile := range []termenv.Profile{termenv.Ascii, termenv.TrueColor} {
+		m := newTestModel(t, "all")
+		m.styles = NewStyles(profile, nil)
+		playing := m.View()
+		blocked := press(m, keyDown).View()
+
+		if lipgloss.Height(playing) != lipgloss.Height(blocked) {
+			t.Errorf("profile %v: the height changed after a wrong input: %d, then %d", profile, lipgloss.Height(playing), lipgloss.Height(blocked))
+		}
+		for _, view := range []string{playing, blocked} {
+			if lipgloss.Width(view) != screenWidth {
+				t.Errorf("profile %v: the screen should be %d cells wide, got %d", profile, screenWidth, lipgloss.Width(view))
+			}
+		}
+	}
+}

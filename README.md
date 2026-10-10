@@ -95,7 +95,7 @@ docker run --rm -it -e TERM -e COLORTERM -e LIBERTEA_LAYOUT=zqsd ghcr.io/paulden
 
 Colors are detected from the terminal (`TERM`, `COLORTERM`, `NO_COLOR`, `CLICOLOR_FORCE`).
 Generic terminal names such as `xterm` (the default inside `docker run -t`) get 16 colors.
-Without colors, a `^` cursor shows the next expected arrow.
+Without colors, a `▲` cursor shows the next expected arrow.
 
 If colors look wrong, force a mode:
 

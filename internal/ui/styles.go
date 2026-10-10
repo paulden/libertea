@@ -7,26 +7,42 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 	"github.com/muesli/termenv"
 
 	"github.com/paulden/libertea/internal/stratagem"
 	"github.com/paulden/libertea/internal/terminal"
 )
 
+// The screen is a ship console: a frame with the title and the key hints
+// embedded in its borders, the stats on one line, the stratagem as a strip of
+// cells that fill up, and the times with a sparkline.
 const (
-	stratagemWidth = 55
-	iconGap        = 2
+	screenWidth = 66
+	innerWidth  = screenWidth - 2
+	margin      = 3
+	// The text column starts after the icon and a gap, and keeps a margin on
+	// the right. It fits the longest name and a strip of 9 arrows.
+	iconGap        = 3
+	textColumn     = margin + terminal.IconColumns + iconGap
+	textWidth      = innerWidth - textColumn - margin
+	penaltyBarSize = 24
+	sparklineSize  = 10
 )
 
 // Colors are given explicitly for each profile: the automatic downgrade of hex
 // colors to the 16 ANSI colors gives poor results.
 var (
-	borderForeground = color("#222323", "0")
-	borderBackground = color("#FFE710", "3")
-	wrongColor       = color("#BF1029", "1")
-	validColor       = color("#3F8F29", "2")
-	headerColor      = color("#0092A6", "6")
+	frameColor    = color("#FFE710", "11")
+	errorColor    = color("#E0434F", "9")
+	dimErrorColor = color("#7D3A3C", "1")
+	textColor     = color("#D8D4C4", "7")
+	dimColor      = color("#8C8878", "8")
+	cellColor     = color("#6B6655", "8")
+	ruleColor     = color("#3A382F", "8")
+	valueColor    = color("#FFE710", "11")
+	fillColor     = color("#191813", "0")
+	validColor    = color("#3F8F29", "10")
+	sparkColor    = color("#B8A640", "3")
 )
 
 // In-game permit colors of each stratagem category, with bright ANSI variants
@@ -51,11 +67,14 @@ var arrowSymbols = map[rune]string{
 	'l': "←",
 }
 
+var sparkLevels = []rune("▁▂▃▄▅▆▇█")
+
 type Styles interface {
-	FormatScoreTable(stats stats) string
+	FormatStats(stats stats) string
 	FormatStratagem(strat stratagem.Stratagem, completion int, isBlocked bool, remaining time.Duration) string
-	FormatTimes(stats stats) string
-	FormatScreen(render string, layoutDescription string) string
+	FormatTimes(stats stats, isBlocked bool) string
+	FormatNotice() string
+	FormatScreen(body string, keysHint string, isBlocked bool) string
 }
 
 type styles struct {
@@ -65,15 +84,23 @@ type styles struct {
 	// terminal cannot display images.
 	iconIDs map[string]int
 
-	screen      lipgloss.Style
-	stratagem   lipgloss.Style
-	wrongInput  lipgloss.Style
-	validInput  lipgloss.Style
-	header      lipgloss.Style
-	cell        lipgloss.Style
-	tableBorder lipgloss.Style
-	times       lipgloss.Style
-	category    lipgloss.Style
+	base       lipgloss.Style
+	frame      lipgloss.Style
+	errorFrame lipgloss.Style
+	title      lipgloss.Style
+	errorTitle lipgloss.Style
+	text       lipgloss.Style
+	dim        lipgloss.Style
+	value      lipgloss.Style
+	rule       lipgloss.Style
+	cell       lipgloss.Style
+	doneArrow  lipgloss.Style
+	nextArrow  lipgloss.Style
+	errorText  lipgloss.Style
+	errorBold  lipgloss.Style
+	dimError   lipgloss.Style
+	valid      lipgloss.Style
+	spark      lipgloss.Style
 }
 
 // NewStyles builds the styles with their own renderer, so that the color
@@ -81,40 +108,29 @@ type styles struct {
 func NewStyles(profile termenv.Profile, iconIDs map[string]int) Styles {
 	r := lipgloss.NewRenderer(os.Stdout)
 	r.SetColorProfile(profile)
+	fg := func(c lipgloss.CompleteColor) lipgloss.Style { return r.NewStyle().Foreground(c) }
 
 	return &styles{
 		hasColors: profile != termenv.Ascii,
 		iconIDs:   iconIDs,
 
-		screen: r.NewStyle().
-			Padding(2).
-			Width(64).
-			Height(20).
-			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(borderForeground).
-			BorderBackground(borderBackground),
-		stratagem: r.NewStyle().
-			Width(stratagemWidth).
-			Bold(true).
-			Align(lipgloss.Center),
-		wrongInput: r.NewStyle().
-			Foreground(wrongColor).
-			Blink(true),
-		validInput: r.NewStyle().
-			Foreground(validColor),
-		header: r.NewStyle().
-			Foreground(headerColor).
-			Bold(true).
-			Align(lipgloss.Center),
-		cell: r.NewStyle().
-			Padding(0, 1),
-		tableBorder: r.NewStyle().
-			Foreground(borderBackground),
-		times: r.NewStyle().
-			Width(55).
-			Faint(true).
-			Align(lipgloss.Center),
-		category: r.NewStyle(),
+		base:       r.NewStyle(),
+		frame:      fg(frameColor),
+		errorFrame: fg(errorColor),
+		title:      fg(frameColor).Bold(true),
+		errorTitle: fg(errorColor).Bold(true),
+		text:       fg(textColor),
+		dim:        fg(dimColor),
+		value:      fg(valueColor).Bold(true),
+		rule:       fg(ruleColor),
+		cell:       fg(cellColor),
+		doneArrow:  fg(fillColor).Background(frameColor).Bold(true),
+		nextArrow:  fg(valueColor).Bold(true).Underline(true),
+		errorText:  fg(errorColor),
+		errorBold:  fg(errorColor).Bold(true),
+		dimError:   fg(dimErrorColor),
+		valid:      fg(validColor),
+		spark:      fg(sparkColor),
 	}
 }
 
@@ -127,83 +143,124 @@ func (s styles) icon(strat stratagem.Stratagem) string {
 	return ""
 }
 
-func (s styles) FormatScoreTable(stats stats) string {
-	t := table.New().
-		Border(lipgloss.NormalBorder()).
-		BorderStyle(s.tableBorder).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			switch {
-			case row == table.HeaderRow:
-				return s.header
-			default:
-				return s.cell
-			}
-		}).
-		Headers("SUCCESSES", "ERRORS", "STREAK", "BEST STREAK").
-		Rows([]string{
-			fmt.Sprintf("%d", stats.successes),
-			fmt.Sprintf("%d", stats.errors),
-			fmt.Sprintf("%d", stats.streak),
-			fmt.Sprintf("%d", stats.bestStreak),
-		})
-
-	return t.Render()
+func (s styles) FormatStats(stats stats) string {
+	item := func(label string, value int) string {
+		return s.dim.Render(label+" ") + s.value.Render(fmt.Sprint(value))
+	}
+	line := strings.Join([]string{
+		item("SUCCESS", stats.successes),
+		item("ERRORS", stats.errors),
+		item("STREAK", stats.streak),
+		item("BEST", stats.bestStreak),
+	}, "    ")
+	return indent(line) + "\n" + indent(s.rule.Render(strings.Repeat("─", innerWidth-2*margin)))
 }
 
+// FormatStratagem renders the name, the category and the code of the
+// stratagem next to its icon, always on as many lines as the icon.
 func (s styles) FormatStratagem(strat stratagem.Stratagem, completion int, isBlocked bool, remaining time.Duration) string {
-	icon := s.icon(strat)
-	style := s.stratagem
-	if icon != "" {
-		style = style.Width(stratagemWidth - terminal.IconColumns - iconGap)
-	}
-
-	name, label := strat.Name, categoryLabel(strat)
+	nameStyle, labelStyle := s.errorText, s.errorText
 	if !isBlocked {
-		categoryStyle := s.category.Foreground(categoryColors[strat.Category])
-		name, label = categoryStyle.Bold(true).Render(name), categoryStyle.Render(label)
-	}
-	rendering := fmt.Sprintf("%s\n%s\n\n", name, label)
-
-	for i, arrow := range strat.Code {
-		if i < completion {
-			rendering += s.validInput.Render(arrowSymbols[arrow])
-		} else {
-			rendering += arrowSymbols[arrow]
-		}
-		rendering += " "
+		category := categoryColors[strat.Category]
+		nameStyle, labelStyle = s.base.Foreground(category).Bold(true), s.base.Foreground(category)
 	}
 
-	if !s.hasColors && !isBlocked {
-		rendering += "\n" + strings.Repeat("  ", completion) + "^" + strings.Repeat("  ", len(strat.Code)-completion-1) + " "
-	} else {
-		rendering += "\n"
+	top, middle, bottom := s.codeStrip(strat.Code, completion, isBlocked)
+	lines := []string{
+		nameStyle.Render(strings.ToUpper(strat.Name)),
+		labelStyle.Render(categoryLabel(strat)),
+		top, middle, bottom,
+		s.underStrip(completion, isBlocked, remaining),
 	}
+	text := strings.Join(lines, "\n")
 
-	if isBlocked {
-		rendering += fmt.Sprintf("\nWrong input! Start over in %.1fs", remaining.Seconds())
-		return withIcon(icon, s.wrongInput.Inherit(style).Render(rendering))
+	icon := s.icon(strat)
+	if icon == "" {
+		// Without icon, the text block is centered in the screen. Its lines
+		// are padded to the same width first, so that the cursor stays under
+		// its arrow: PlaceHorizontal centers each line on its own.
+		block := s.base.Width(lipgloss.Width(text)).Render(text)
+		return lipgloss.PlaceHorizontal(innerWidth, lipgloss.Center, block)
 	}
-
-	return withIcon(icon, style.Render(rendering+"\n "))
+	return indent(lipgloss.JoinHorizontal(lipgloss.Top, icon, strings.Repeat(" ", iconGap), s.base.Width(textWidth).Render(text)))
 }
 
-func withIcon(icon, text string) string {
-	if icon != "" {
-		text = lipgloss.JoinHorizontal(lipgloss.Center, icon, strings.Repeat(" ", iconGap), text)
+// codeStrip draws the code as connected cells: done arrows are filled, the
+// next one is underlined, and every arrow turns red after a wrong input.
+func (s styles) codeStrip(code []rune, completion int, isBlocked bool) (string, string, string) {
+	border := s.cell
+	if isBlocked {
+		border = s.errorText
 	}
-	return fmt.Sprintf("%s \n", text)
+
+	var top, middle, bottom strings.Builder
+	top.WriteString(s.cell.Render("┌"))
+	middle.WriteString(s.cell.Render("│"))
+	bottom.WriteString(s.cell.Render("└"))
+	for i, direction := range code {
+		arrow := arrowSymbols[direction]
+		switch {
+		case isBlocked:
+			arrow = s.errorBold.Render(" " + arrow + " ")
+		case i < completion:
+			arrow = s.doneArrow.Render(" " + arrow + " ")
+		case i == completion:
+			arrow = " " + s.nextArrow.Render(arrow) + " "
+		default:
+			arrow = s.dim.Render(" " + arrow + " ")
+		}
+
+		topJoint, bottomJoint := "┬", "┴"
+		if i == len(code)-1 {
+			topJoint, bottomJoint = "┐", "┘"
+		}
+		top.WriteString(border.Render("───") + s.cell.Render(topJoint))
+		middle.WriteString(arrow + s.cell.Render("│"))
+		bottom.WriteString(border.Render("───") + s.cell.Render(bottomJoint))
+	}
+	return top.String(), middle.String(), bottom.String()
+}
+
+// underStrip shows the penalty as a draining bar after a wrong input, and a
+// cursor under the next arrow when colors cannot show the progress.
+func (s styles) underStrip(completion int, isBlocked bool, remaining time.Duration) string {
+	if isBlocked {
+		full := min(penaltyBarSize, int(float64(penaltyBarSize)*remaining.Seconds()/penaltyDuration.Seconds()+0.5))
+		return s.errorText.Render(strings.Repeat("█", full)) +
+			s.dimError.Render(strings.Repeat("░", penaltyBarSize-full)) +
+			s.errorText.Render(fmt.Sprintf("  %.1fs", remaining.Seconds()))
+	}
+	if !s.hasColors {
+		return strings.Repeat(" ", 2+4*completion) + "▲"
+	}
+	return ""
 }
 
 func categoryLabel(strat stratagem.Stratagem) string {
-	label := strings.ToUpper(strat.Category)
+	label := strings.ToUpper(strat.Category[:1]) + strat.Category[1:]
 	if strat.Kind != "" {
-		label += " · " + strings.ToUpper(strat.Kind)
+		label += " · " + strat.Kind
 	}
 	return label
 }
 
-func (s styles) FormatTimes(stats stats) string {
-	return s.times.Render(fmt.Sprintf("Last: %s   Best: %s", formatDuration(stats.lastTime), formatDuration(stats.bestTime)))
+func (s styles) FormatTimes(stats stats, isBlocked bool) string {
+	if isBlocked {
+		return indent(s.errorBold.Render("WRONG INPUT") + s.dim.Render("  start over when the bar is empty"))
+	}
+
+	line := s.dim.Render("LAST ") + s.text.Render(formatDuration(stats.lastTime))
+	switch {
+	case stats.newBest:
+		line += "  " + s.valid.Render("NEW BEST")
+	case stats.lastTime > stats.bestTime:
+		line += "  " + s.dimError.Render(fmt.Sprintf("▲%.2f", (stats.lastTime-stats.bestTime).Seconds()))
+	}
+	line += s.dim.Render("    BEST ") + s.text.Render(formatDuration(stats.bestTime))
+	if spark := sparkline(stats.recentTimes); spark != "" {
+		line += "    " + s.spark.Render(spark)
+	}
+	return indent(line)
 }
 
 func formatDuration(d time.Duration) string {
@@ -213,16 +270,63 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%.2fs", d.Seconds())
 }
 
-func (s styles) FormatScreen(output string, layoutDescription string) string {
-	var render string
-
-	header := "Call for your next stratagem and save democracy!\n"
-	footer := fmt.Sprintf("Keys: %s. Press Esc to quit.", layoutDescription)
-	if !s.hasColors {
-		footer += "\nNo colors detected, try -color 256."
+// sparkline draws the times between the fastest and the slowest one.
+func sparkline(times []time.Duration) string {
+	if len(times) < 2 {
+		return ""
+	}
+	fastest, slowest := times[0], times[0]
+	for _, t := range times {
+		fastest, slowest = min(fastest, t), max(slowest, t)
 	}
 
-	render = header + "\n" + output + "\n" + footer
+	var b strings.Builder
+	for _, t := range times {
+		level := len(sparkLevels) / 2
+		if slowest > fastest {
+			level = int(float64(len(sparkLevels)-1) * float64(t-fastest) / float64(slowest-fastest))
+		}
+		b.WriteRune(sparkLevels[level])
+	}
+	return b.String()
+}
 
-	return s.screen.Render(render)
+// FormatNotice suggests forcing a color mode when none was detected.
+func (s styles) FormatNotice() string {
+	if s.hasColors {
+		return ""
+	}
+	return indent("No colors detected, try -color 256.")
+}
+
+// FormatScreen frames the body, with the title and the key hints embedded in
+// the borders. The frame turns red after a wrong input.
+func (s styles) FormatScreen(body string, keysHint string, isBlocked bool) string {
+	frame, title := s.frame, s.title
+	if isBlocked {
+		frame, title = s.errorFrame, s.errorTitle
+	}
+
+	left, right := "LIBERTEA", "STRATAGEM DRILL"
+	top := frame.Render("╭─ ") + title.Render(left) + frame.Render(" "+strings.Repeat("─", innerWidth-6-len(left)-len(right))+" ") +
+		s.dim.Render(right) + frame.Render(" ─╮")
+
+	hint := keysHint + " move  ·  esc quit"
+	bottom := frame.Render("╰─ ") + s.dim.Render(hint) + frame.Render(" "+strings.Repeat("─", innerWidth-3-lipgloss.Width(hint))+"╯")
+
+	lines := []string{top}
+	for _, line := range strings.Split(body, "\n") {
+		padding := max(0, innerWidth-lipgloss.Width(line))
+		lines = append(lines, frame.Render("│")+line+strings.Repeat(" ", padding)+frame.Render("│"))
+	}
+	lines = append(lines, bottom)
+	return strings.Join(lines, "\n")
+}
+
+func indent(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = strings.Repeat(" ", margin) + line
+	}
+	return strings.Join(lines, "\n")
 }

@@ -2,6 +2,7 @@
 package ui
 
 import (
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/timer"
@@ -24,6 +25,10 @@ type stats struct {
 	bestStreak int
 	lastTime   time.Duration
 	bestTime   time.Duration
+	// newBest is set when the last time beat a previous best time.
+	newBest bool
+	// recentTimes holds the last times, oldest first, for the sparkline.
+	recentTimes []time.Duration
 }
 
 type Model struct {
@@ -112,8 +117,13 @@ func (m *Model) completeStratagem() {
 	m.stats.streak++
 	m.stats.bestStreak = max(m.stats.bestStreak, m.stats.streak)
 	m.stats.lastTime = elapsed
+	m.stats.newBest = m.stats.bestTime != 0 && elapsed < m.stats.bestTime
 	if m.stats.bestTime == 0 || elapsed < m.stats.bestTime {
 		m.stats.bestTime = elapsed
+	}
+	m.stats.recentTimes = append(m.stats.recentTimes, elapsed)
+	if len(m.stats.recentTimes) > sparklineSize {
+		m.stats.recentTimes = m.stats.recentTimes[1:]
 	}
 
 	m.stratagemCompletion = 0
@@ -121,16 +131,20 @@ func (m *Model) completeStratagem() {
 	m.currentStratagem = stratagem.Random(m.stratagems, m.currentStratagem.Name)
 }
 
+// View keeps the same height in every state, so that the screen does not jump.
 func (m Model) View() string {
-	var output string
+	isBlocked := m.blockedTimer.Running()
+	body := strings.Join([]string{
+		"",
+		m.styles.FormatStats(m.stats),
+		"",
+		m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, isBlocked, m.blockedTimer.Timeout),
+		"",
+		m.styles.FormatTimes(m.stats, isBlocked),
+		m.styles.FormatNotice(),
+	}, "\n")
 
-	output += m.styles.FormatScoreTable(m.stats)
-	output += "\n\n"
-	output += m.styles.FormatStratagem(m.currentStratagem, m.stratagemCompletion, m.blockedTimer.Running(), m.blockedTimer.Timeout)
-	output += "\n"
-	output += m.styles.FormatTimes(m.stats)
-
-	screen := m.styles.FormatScreen(output, m.layout.Description)
+	screen := m.styles.FormatScreen(body, m.layout.Hint, isBlocked)
 
 	// Place leaves the screen untouched when the terminal is smaller than it.
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, screen)
