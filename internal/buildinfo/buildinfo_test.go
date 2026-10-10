@@ -1,4 +1,4 @@
-package main
+package buildinfo
 
 import (
 	"runtime/debug"
@@ -32,7 +32,7 @@ func TestVersionFromBuildInfo(t *testing.T) {
 }
 
 func TestVersion(t *testing.T) {
-	if got := Version(); !strings.HasPrefix(got, "libertea ") {
+	if got := Version("dev", "", ""); !strings.HasPrefix(got, "libertea ") {
 		t.Errorf("unexpected version string %q", got)
 	}
 }

@@ -1,4 +1,5 @@
-package main
+// Package keys maps keyboard keys to stratagem directions.
+package keys
 
 import (
 	"fmt"
@@ -6,13 +7,11 @@ import (
 	"strings"
 )
 
-const (
-	DEFAULT_LAYOUT = "all"
-	LAYOUT_ENV_VAR = "LIBERTEA_LAYOUT"
-)
+const Default = "all"
 
-type keyLayout struct {
-	description string
+type Layout struct {
+	// Description lists the keys of the layout, for the help line.
+	Description string
 	keys        map[string]rune
 }
 
@@ -46,7 +45,7 @@ var vimKeys = map[string]rune{
 
 // None of the letter layouts overlap in a conflicting way (S and D mean the
 // same direction in WASD and ZQSD), so they can all be enabled at once.
-var LAYOUTS = map[string]keyLayout{
+var layouts = map[string]Layout{
 	"arrows": {"arrows", mergeKeys(arrowKeys)},
 	"wasd":   {"arrows / WASD", mergeKeys(arrowKeys, wasdKeys)},
 	"zqsd":   {"arrows / ZQSD", mergeKeys(arrowKeys, zqsdKeys)},
@@ -64,26 +63,26 @@ func mergeKeys(mappings ...map[string]rune) map[string]rune {
 	return merged
 }
 
-func LayoutNames() []string {
-	names := make([]string, 0, len(LAYOUTS))
-	for name := range LAYOUTS {
+func Names() []string {
+	names := make([]string, 0, len(layouts))
+	for name := range layouts {
 		names = append(names, name)
 	}
 	sort.Strings(names)
 	return names
 }
 
-func GetLayout(name string) (keyLayout, error) {
-	layout, ok := LAYOUTS[strings.ToLower(name)]
+func Get(name string) (Layout, error) {
+	layout, ok := layouts[strings.ToLower(name)]
 	if !ok {
-		return keyLayout{}, fmt.Errorf("unknown layout %q, expected one of: %s", name, strings.Join(LayoutNames(), ", "))
+		return Layout{}, fmt.Errorf("unknown layout %q, expected one of: %s", name, strings.Join(Names(), ", "))
 	}
 	return layout, nil
 }
 
 // Direction returns the direction bound to a key, ignoring case so that
 // Caps Lock does not break letter layouts.
-func (l keyLayout) Direction(key string) (rune, bool) {
+func (l Layout) Direction(key string) (rune, bool) {
 	direction, ok := l.keys[strings.ToLower(key)]
 	return direction, ok
 }

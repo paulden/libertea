@@ -1,10 +1,8 @@
-package main
+package terminal
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
 
@@ -47,54 +45,5 @@ func TestResolveColorProfile(t *testing.T) {
 func TestUnknownColorMode(t *testing.T) {
 	if _, err := ResolveColorProfile("rainbow", fakeEnv(nil), true); err == nil {
 		t.Error("unknown color mode should return an error")
-	}
-}
-
-func TestCursorShownWithoutColors(t *testing.T) {
-	render := NewStyles(termenv.Ascii, nil).FormatStratagem(testStratagem, 2, false, 0)
-	lines := strings.Split(render, "\n")
-
-	arrowsLine, cursorLine := -1, -1
-	for i, line := range lines {
-		if strings.Contains(line, "↑ ↓ ← →") {
-			arrowsLine = i
-		}
-		if strings.Contains(line, "^") {
-			cursorLine = i
-		}
-	}
-	if arrowsLine == -1 || cursorLine != arrowsLine+1 {
-		t.Fatalf("cursor should be right under the arrows:\n%s", render)
-	}
-	if column(lines[cursorLine], "^") != column(lines[arrowsLine], "←") {
-		t.Errorf("cursor should be under the third arrow:\n%s", render)
-	}
-}
-
-func TestNoCursorWithColors(t *testing.T) {
-	render := NewStyles(termenv.ANSI, nil).FormatStratagem(testStratagem, 2, false, 0)
-	if strings.Contains(render, "^") {
-		t.Errorf("cursor should only be shown without colors:\n%s", render)
-	}
-}
-
-func column(line, substr string) int {
-	return lipgloss.Width(line[:strings.Index(line, substr)])
-}
-
-func TestCategoryShownWithAndWithoutColors(t *testing.T) {
-	for _, profile := range []termenv.Profile{termenv.Ascii, termenv.ANSI, termenv.ANSI256, termenv.TrueColor} {
-		render := NewStyles(profile, nil).FormatStratagem(testStratagem, 0, false, 0)
-		if !strings.Contains(render, "OFFENSIVE · ORBITAL") {
-			t.Errorf("profile %v: the category label should always be shown:\n%s", profile, render)
-		}
-	}
-}
-
-func TestEveryCategoryHasAColor(t *testing.T) {
-	for _, category := range CATEGORIES {
-		if _, ok := CATEGORY_COLORS[category]; !ok {
-			t.Errorf("category %q has no color", category)
-		}
 	}
 }

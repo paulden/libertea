@@ -1,4 +1,5 @@
-package main
+// Package ui is the game screen, built with bubbletea and lipgloss.
+package ui
 
 import (
 	"time"
@@ -6,11 +7,14 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/paulden/libertea/internal/keys"
+	"github.com/paulden/libertea/internal/stratagem"
 )
 
 const (
-	PENALTY_DURATION = 2 * time.Second
-	PENALTY_TICK     = 100 * time.Millisecond
+	penaltyDuration = 2 * time.Second
+	penaltyTick     = 100 * time.Millisecond
 )
 
 type stats struct {
@@ -22,34 +26,34 @@ type stats struct {
 	bestTime   time.Duration
 }
 
-type model struct {
-	stratagems          []stratagem
-	currentStratagem    stratagem
+type Model struct {
+	stratagems          []stratagem.Stratagem
+	currentStratagem    stratagem.Stratagem
 	stratagemCompletion int
 	stratagemStart      time.Time
 	stats               stats
 	blockedTimer        timer.Model
-	layout              keyLayout
+	layout              keys.Layout
 	styles              Styles
 	// Terminal size, used to center the game. Zero until bubbletea reports it.
 	width  int
 	height int
 }
 
-func NewModel(styles Styles, layout keyLayout, stratagems []stratagem) model {
-	return model{
+func NewModel(styles Styles, layout keys.Layout, stratagems []stratagem.Stratagem) Model {
+	return Model{
 		stratagems:       stratagems,
-		currentStratagem: GetRandomStratagem(stratagems, ""),
+		currentStratagem: stratagem.Random(stratagems, ""),
 		layout:           layout,
 		styles:           styles,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
@@ -80,17 +84,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.stratagemStart = time.Now()
 		}
 
-		if direction != m.currentStratagem.code[m.stratagemCompletion] {
+		if direction != m.currentStratagem.Code[m.stratagemCompletion] {
 			m.stats.errors++
 			m.stats.streak = 0
 			m.stratagemCompletion = 0
-			m.blockedTimer = timer.NewWithInterval(PENALTY_DURATION, PENALTY_TICK)
+			m.blockedTimer = timer.NewWithInterval(penaltyDuration, penaltyTick)
 			return m, m.blockedTimer.Init()
 		}
 
 		m.stratagemCompletion++
 
-		if m.stratagemCompletion == len(m.currentStratagem.code) {
+		if m.stratagemCompletion == len(m.currentStratagem.Code) {
 			m.completeStratagem()
 		}
 	}
@@ -98,7 +102,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *model) completeStratagem() {
+func (m *Model) completeStratagem() {
 	elapsed := time.Since(m.stratagemStart)
 
 	m.stats.successes++
@@ -111,10 +115,10 @@ func (m *model) completeStratagem() {
 
 	m.stratagemCompletion = 0
 	m.stratagemStart = time.Time{}
-	m.currentStratagem = GetRandomStratagem(m.stratagems, m.currentStratagem.name)
+	m.currentStratagem = stratagem.Random(m.stratagems, m.currentStratagem.Name)
 }
 
-func (m model) View() string {
+func (m Model) View() string {
 	var output string
 
 	output += m.styles.FormatScoreTable(m.stats)
@@ -123,7 +127,7 @@ func (m model) View() string {
 	output += "\n"
 	output += m.styles.FormatTimes(m.stats)
 
-	screen := m.styles.FormatScreen(output, m.layout.description)
+	screen := m.styles.FormatScreen(output, m.layout.Description)
 
 	// Place leaves the screen untouched when the terminal is smaller than it.
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, screen)
