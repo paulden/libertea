@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -41,41 +42,6 @@ func color(hex, ansi string) lipgloss.CompleteColor {
 	return lipgloss.CompleteColor{TrueColor: hex, ANSI256: hex, ANSI: ansi}
 }
 
-var (
-	globalStyle = lipgloss.NewStyle().
-			Padding(2).
-			Width(64).
-			Height(20).
-			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(borderForeground).
-			BorderBackground(borderBackground)
-
-	stratagemStyle = lipgloss.NewStyle().
-			Width(stratagemWidth).
-			Bold(true).
-			Align(lipgloss.Center)
-
-	wrongInput = lipgloss.NewStyle().
-			Foreground(wrongColor).
-			Blink(true)
-
-	validInput = lipgloss.NewStyle().
-			Foreground(validColor)
-
-	headerStyle = lipgloss.NewStyle().
-			Foreground(headerColor).
-			Bold(true).
-			Align(lipgloss.Center)
-
-	cellStyle = lipgloss.NewStyle().
-			Padding(0, 1)
-
-	timesStyle = lipgloss.NewStyle().
-			Width(55).
-			Faint(true).
-			Align(lipgloss.Center)
-)
-
 // Plain arrows from the Arrows block render as a single cell in most fonts,
 // unlike the Supplemental Arrows-C ones which caused rendering artifacts.
 var arrowSymbols = map[rune]string{
@@ -98,13 +64,57 @@ type styles struct {
 	// Image ids of the icons transmitted to the terminal, nil when the
 	// terminal cannot display images.
 	iconIDs map[string]int
+
+	screen      lipgloss.Style
+	stratagem   lipgloss.Style
+	wrongInput  lipgloss.Style
+	validInput  lipgloss.Style
+	header      lipgloss.Style
+	cell        lipgloss.Style
+	tableBorder lipgloss.Style
+	times       lipgloss.Style
+	category    lipgloss.Style
 }
 
+// NewStyles builds the styles with their own renderer, so that the color
+// profile does not leak to other instances through the lipgloss default one.
 func NewStyles(profile termenv.Profile, iconIDs map[string]int) Styles {
-	lipgloss.SetColorProfile(profile)
+	r := lipgloss.NewRenderer(os.Stdout)
+	r.SetColorProfile(profile)
+
 	return &styles{
 		hasColors: profile != termenv.Ascii,
 		iconIDs:   iconIDs,
+
+		screen: r.NewStyle().
+			Padding(2).
+			Width(64).
+			Height(20).
+			BorderStyle(lipgloss.RoundedBorder()).
+			BorderForeground(borderForeground).
+			BorderBackground(borderBackground),
+		stratagem: r.NewStyle().
+			Width(stratagemWidth).
+			Bold(true).
+			Align(lipgloss.Center),
+		wrongInput: r.NewStyle().
+			Foreground(wrongColor).
+			Blink(true),
+		validInput: r.NewStyle().
+			Foreground(validColor),
+		header: r.NewStyle().
+			Foreground(headerColor).
+			Bold(true).
+			Align(lipgloss.Center),
+		cell: r.NewStyle().
+			Padding(0, 1),
+		tableBorder: r.NewStyle().
+			Foreground(borderBackground),
+		times: r.NewStyle().
+			Width(55).
+			Faint(true).
+			Align(lipgloss.Center),
+		category: r.NewStyle(),
 	}
 }
 
@@ -120,13 +130,13 @@ func (s styles) icon(strat stratagem.Stratagem) string {
 func (s styles) FormatScoreTable(stats stats) string {
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(borderBackground)).
+		BorderStyle(s.tableBorder).
 		StyleFunc(func(row, col int) lipgloss.Style {
 			switch {
 			case row == table.HeaderRow:
-				return headerStyle
+				return s.header
 			default:
-				return cellStyle
+				return s.cell
 			}
 		}).
 		Headers("SUCCESSES", "ERRORS", "STREAK", "BEST STREAK").
@@ -142,21 +152,21 @@ func (s styles) FormatScoreTable(stats stats) string {
 
 func (s styles) FormatStratagem(strat stratagem.Stratagem, completion int, isBlocked bool, remaining time.Duration) string {
 	icon := s.icon(strat)
-	style := stratagemStyle
+	style := s.stratagem
 	if icon != "" {
 		style = style.Width(stratagemWidth - terminal.IconColumns - iconGap)
 	}
 
 	name, label := strat.Name, categoryLabel(strat)
 	if !isBlocked {
-		categoryStyle := lipgloss.NewStyle().Foreground(categoryColors[strat.Category])
+		categoryStyle := s.category.Foreground(categoryColors[strat.Category])
 		name, label = categoryStyle.Bold(true).Render(name), categoryStyle.Render(label)
 	}
 	rendering := fmt.Sprintf("%s\n%s\n\n", name, label)
 
 	for i, arrow := range strat.Code {
 		if i < completion {
-			rendering += validInput.Render(arrowSymbols[arrow])
+			rendering += s.validInput.Render(arrowSymbols[arrow])
 		} else {
 			rendering += arrowSymbols[arrow]
 		}
@@ -171,7 +181,7 @@ func (s styles) FormatStratagem(strat stratagem.Stratagem, completion int, isBlo
 
 	if isBlocked {
 		rendering += fmt.Sprintf("\nWrong input! Start over in %.1fs", remaining.Seconds())
-		return withIcon(icon, wrongInput.Inherit(style).Render(rendering))
+		return withIcon(icon, s.wrongInput.Inherit(style).Render(rendering))
 	}
 
 	return withIcon(icon, style.Render(rendering+"\n "))
@@ -193,7 +203,7 @@ func categoryLabel(strat stratagem.Stratagem) string {
 }
 
 func (s styles) FormatTimes(stats stats) string {
-	return timesStyle.Render(fmt.Sprintf("Last: %s   Best: %s", formatDuration(stats.lastTime), formatDuration(stats.bestTime)))
+	return s.times.Render(fmt.Sprintf("Last: %s   Best: %s", formatDuration(stats.lastTime), formatDuration(stats.bestTime)))
 }
 
 func formatDuration(d time.Duration) string {
@@ -214,5 +224,5 @@ func (s styles) FormatScreen(output string, layoutDescription string) string {
 
 	render = header + "\n" + output + "\n" + footer
 
-	return globalStyle.Render(render)
+	return s.screen.Render(render)
 }

@@ -97,3 +97,12 @@ func TestEveryCategoryHasAColor(t *testing.T) {
 func column(line, substr string) int {
 	return lipgloss.Width(line[:strings.Index(line, substr)])
 }
+
+func TestStylesDoNotShareTheColorProfile(t *testing.T) {
+	plain := NewStyles(termenv.Ascii, nil)
+	NewStyles(termenv.TrueColor, nil)
+
+	if render := plain.FormatStratagem(testStratagem, 1, false, 0); strings.Contains(render, "\x1b[") {
+		t.Errorf("styles without colors should not render escape sequences after other styles were created:\n%q", render)
+	}
+}
