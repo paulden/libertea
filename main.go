@@ -10,21 +10,21 @@ import (
 )
 
 func main() {
-	layoutName := flag.String("layout", envOrDefault(LAYOUT_ENV_VAR, DEFAULT_LAYOUT), fmt.Sprintf(
+	layoutName := flag.String("layout", envOrDefault(layoutEnvVar, defaultLayout), fmt.Sprintf(
 		"keyboard layout, one of: %s (can also be set with %s)",
-		strings.Join(LayoutNames(), ", "), LAYOUT_ENV_VAR,
+		strings.Join(LayoutNames(), ", "), layoutEnvVar,
 	))
-	colorMode := flag.String("color", envOrDefault(COLOR_ENV_VAR, DEFAULT_COLOR_MODE), fmt.Sprintf(
+	colorMode := flag.String("color", envOrDefault(colorEnvVar, defaultColorMode), fmt.Sprintf(
 		"color mode, one of: %s (can also be set with %s)",
-		strings.Join(ColorModeNames(), ", "), COLOR_ENV_VAR,
+		strings.Join(ColorModeNames(), ", "), colorEnvVar,
 	))
-	stratagemsPath := flag.String("stratagems", os.Getenv(STRATAGEMS_ENV_VAR), fmt.Sprintf(
+	stratagemsPath := flag.String("stratagems", os.Getenv(stratagemsEnvVar), fmt.Sprintf(
 		"YAML file with the stratagems to train on, defaults to the embedded list (can also be set with %s)",
-		STRATAGEMS_ENV_VAR,
+		stratagemsEnvVar,
 	))
-	iconsMode := flag.String("icons", envOrDefault(ICONS_ENV_VAR, DEFAULT_ICONS_MODE), fmt.Sprintf(
+	iconsMode := flag.String("icons", envOrDefault(iconsEnvVar, defaultIconsMode), fmt.Sprintf(
 		"stratagem icons, one of: %s; they require a terminal supporting the kitty graphics protocol (can also be set with %s)",
-		strings.Join(IconsModeNames(), ", "), ICONS_ENV_VAR,
+		strings.Join(IconsModeNames(), ", "), iconsEnvVar,
 	))
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
@@ -63,9 +63,9 @@ func main() {
 	if showIcons {
 		// Terminals store images per screen, so icons are transmitted once the
 		// alternate screen is active, and bubbletea renders inline into it.
-		fmt.Print(ENTER_ALT_SCREEN)
+		fmt.Print(enterAltScreen)
 		if iconIDs, err = TransmitIcons(os.Stdout, stratagems); err != nil {
-			fmt.Print(DELETE_IMAGES + EXIT_ALT_SCREEN)
+			fmt.Print(deleteImages + exitAltScreen)
 			fmt.Fprintf(os.Stderr, "Cannot transmit icons: %v\n", err)
 			os.Exit(1)
 		}
@@ -77,7 +77,7 @@ func main() {
 
 	_, err = tea.NewProgram(model, options...).Run()
 	if showIcons {
-		fmt.Print(DELETE_IMAGES + EXIT_ALT_SCREEN)
+		fmt.Print(deleteImages + exitAltScreen)
 	}
 	if err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
