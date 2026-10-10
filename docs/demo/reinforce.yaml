@@ -1,0 +1,6 @@
+stratagems:
+  - name: Reinforce
+    category: mission
+    type: Ship
+    code: [up, down, right, left, up]
+    icon: reinforce

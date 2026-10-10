@@ -13,6 +13,20 @@ gofmt -l . && go vet ./...
 
 Pull requests run the same checks in CI, plus `go mod tidy -diff`, `govulncheck` and a multi-platform image build.
 
+### Project layout
+
+| Path | Content |
+|------|---------|
+| `main.go` | Flags, environment variables and wiring |
+| `internal/stratagem` | Stratagem list and icons, embedded in the binary |
+| `internal/keys` | Keyboard layouts |
+| `internal/terminal` | Color detection and the kitty graphics protocol |
+| `internal/ui` | Game screen: bubbletea model and lipgloss styles |
+| `internal/buildinfo` | Version string |
+| `cmd/update-stratagems` | Regenerates the stratagem list and icons from the Helldivers Wiki |
+
+`main.go` stays at the root so that `go install github.com/paulden/libertea@latest` keeps working.
+
 ## Continuous integration
 
 | Workflow | Trigger | What it does |
@@ -23,6 +37,20 @@ Pull requests run the same checks in CI, plus `go mod tidy -diff`, `govulncheck`
 | `Image cleanup` | every Monday, manual | Deletes untagged images and keeps the 10 newest `sha-*` images. Manual runs are dry runs by default. |
 
 `Checks` and `Image` are reusable workflows called by the ones above.
+
+## README demos
+
+The GIFs in [`docs/demo`](docs/demo) are recorded in a real kitty terminal, so that the icons are shown:
+kitty runs in a virtual X server, `xdotool` types the keys and `ffmpeg` records the screen.
+Record them again when the screen changes, from the repository root:
+
+```
+docker build -f docs/demo/Dockerfile -t libertea-demo .
+docker run --rm -v "$PWD/docs/demo:/out" libertea-demo
+```
+
+The scenarios are in [`docs/demo/record.sh`](docs/demo/record.sh). Each one trains on a single stratagem,
+so that the typed keys always match the asked code.
 
 ## Releasing
 
@@ -47,10 +75,10 @@ The Renovate GitHub app must be installed on the repository.
 
 | Group | Files | Update |
 |-------|-------|--------|
-| Go toolchain | `go.mod` (`toolchain`), `Dockerfile`, `.tool-versions` | one pull request for the three files |
+| Go toolchain | `go.mod` (`toolchain`), `Dockerfile`, `docs/demo/Dockerfile`, `.tool-versions` | one pull request for all the files |
 | Go modules | `go.mod`, `go.sum` | minor and patch grouped, majors one by one |
 | GitHub Actions | `.github/workflows/*.yml` | pinned by commit digest |
-| Base image | `Dockerfile`, `goreleaser.Dockerfile` | pinned by digest |
+| Base image | `Dockerfile`, `goreleaser.Dockerfile`, `docs/demo/Dockerfile` | pinned by digest |
 
 The `go` directive in `go.mod` is the oldest Go release still supported upstream.
 It is not updated by Renovate: raise it by hand when a Go release reaches its end of life,

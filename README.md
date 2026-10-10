@@ -8,6 +8,8 @@ skills before you prove yourself in the battlefield and put an end to our autocr
 [![CI](https://github.com/paulden/libertea/actions/workflows/ci.yml/badge.svg)](https://github.com/paulden/libertea/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/paulden/libertea?include_prereleases)](https://github.com/paulden/libertea/releases)
 
+![Calling stratagems in libertea, with a wrong input and its penalty](docs/demo/demo.gif)
+
 ## Install
 
 ### Docker
@@ -86,6 +88,8 @@ Arrow keys always work. Letter keys depend on the selected layout:
 | `vim`    | HJKL                                 |
 | `arrows` | Arrow keys only                      |
 
+![Each layout played with its own keys](docs/demo/layouts.gif)
+
 ```
 libertea -layout zqsd
 docker run --rm -it -e TERM -e COLORTERM -e LIBERTEA_LAYOUT=zqsd ghcr.io/paulden/libertea
@@ -95,7 +99,7 @@ docker run --rm -it -e TERM -e COLORTERM -e LIBERTEA_LAYOUT=zqsd ghcr.io/paulden
 
 Colors are detected from the terminal (`TERM`, `COLORTERM`, `NO_COLOR`, `CLICOLOR_FORCE`).
 Generic terminal names such as `xterm` (the default inside `docker run -t`) get 16 colors.
-Without colors, a `^` cursor shows the next expected arrow.
+Without colors, a `▲` cursor shows the next expected arrow.
 
 If colors look wrong, force a mode:
 
@@ -103,9 +107,11 @@ If colors look wrong, force a mode:
 libertea -color 256
 ```
 
+![16 colors, then no colors with the cursor](docs/demo/colors.gif)
+
 ### Stratagems
 
-The stratagems come from [`stratagems.yaml`](stratagems.yaml), embedded in the binary.
+The stratagems come from [`stratagems.yaml`](internal/stratagem/stratagems.yaml), embedded in the binary.
 To train on your own selection, write a file with the same format and pass it with `-stratagems`:
 
 ```yaml
@@ -135,6 +141,8 @@ Stratagem icons are shown next to their name in terminals supporting the
 such as [kitty](https://sw.kovidgoyal.net/kitty/) and [Ghostty](https://ghostty.org/).
 Support is detected by querying the terminal, other terminals only show the category colors.
 
+![Without icons, the stratagem is centered](docs/demo/no-icons.gif)
+
 If the detection fails in a terminal that supports it, or to disable icons:
 
 ```
@@ -151,7 +159,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, the CI, releas
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.
 - The list of stratagems is generated from the Helldivers [wiki](https://helldivers.wiki.gg/wiki/Stratagems), whose content is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0).
 - Stratagem icons are hand traced from the game assets by [Dogo314](https://helldivers.wiki.gg/wiki/User:Dogo314) for the Helldivers Wiki.
-  The original artwork belongs to Arrowhead Game Studios, see [icons/README.md](icons/README.md).
+  The original artwork belongs to Arrowhead Game Studios, see [the icons README](internal/stratagem/icons/README.md).
 
 ## TODO
 

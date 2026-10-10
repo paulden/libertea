@@ -1,20 +1,15 @@
-package main
+// Package buildinfo describes the build of the binary.
+package buildinfo
 
 import (
 	"fmt"
 	"runtime/debug"
 )
 
-// Set by GoReleaser and the Dockerfile with -ldflags "-X main.version=...".
-var (
-	version = "dev"
-	commit  = ""
-	date    = ""
-)
-
-// Version describes the build. Binaries installed with `go install` get
-// their version and commit from the build information embedded by Go.
-func Version() string {
+// Version describes the build from the values set with -ldflags, "dev" and
+// empty strings when they are not set. Binaries installed with `go install`
+// get their version and commit from the build information embedded by Go.
+func Version(version, commit, date string) string {
 	v, c, d := version, commit, date
 	if info, ok := debug.ReadBuildInfo(); ok {
 		v, c, d = versionFromBuildInfo(info, v, c, d)

@@ -1,0 +1,6 @@
+stratagems:
+  - name: Orbital Railcannon Strike
+    category: offensive
+    type: Orbital
+    code: [right, up, down, down, right]
+    icon: orbital-railcannon-strike

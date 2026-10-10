@@ -28,13 +28,13 @@
       "groupName": "GitHub Actions"
     },
     {
-      "description": "Group base image updates",
+      "description": "Group base image updates, including the demo recorder one",
       "matchDatasources": ["docker"],
-      "matchDepNames": ["gcr.io/distroless/{/,}**"],
+      "matchDepNames": ["gcr.io/distroless/{/,}**", "debian"],
       "groupName": "Base image"
     },
     {
-      "description": "Keep the Go toolchain in sync in go.mod, the Dockerfile and .tool-versions",
+      "description": "Keep the Go toolchain in sync in go.mod, the Dockerfiles and .tool-versions",
       "matchDepNames": ["go", "golang"],
       "groupName": "Go toolchain"
     },

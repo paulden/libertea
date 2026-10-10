@@ -7,52 +7,73 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/paulden/libertea/internal/buildinfo"
+	"github.com/paulden/libertea/internal/keys"
+	"github.com/paulden/libertea/internal/stratagem"
+	"github.com/paulden/libertea/internal/terminal"
+	"github.com/paulden/libertea/internal/ui"
+)
+
+// Set by GoReleaser and the Dockerfile with -ldflags "-X main.version=...".
+var (
+	version = "dev"
+	commit  = ""
+	date    = ""
+)
+
+// Every flag can also be set with an environment variable, the flag wins.
+const (
+	layoutEnvVar     = "LIBERTEA_LAYOUT"
+	colorEnvVar      = "LIBERTEA_COLOR"
+	stratagemsEnvVar = "LIBERTEA_STRATAGEMS"
+	iconsEnvVar      = "LIBERTEA_ICONS"
 )
 
 func main() {
-	layoutName := flag.String("layout", envOrDefault(LAYOUT_ENV_VAR, DEFAULT_LAYOUT), fmt.Sprintf(
+	layoutName := flag.String("layout", envOrDefault(layoutEnvVar, keys.Default), fmt.Sprintf(
 		"keyboard layout, one of: %s (can also be set with %s)",
-		strings.Join(LayoutNames(), ", "), LAYOUT_ENV_VAR,
+		strings.Join(keys.Names(), ", "), layoutEnvVar,
 	))
-	colorMode := flag.String("color", envOrDefault(COLOR_ENV_VAR, DEFAULT_COLOR_MODE), fmt.Sprintf(
+	colorMode := flag.String("color", envOrDefault(colorEnvVar, terminal.DefaultColorMode), fmt.Sprintf(
 		"color mode, one of: %s (can also be set with %s)",
-		strings.Join(ColorModeNames(), ", "), COLOR_ENV_VAR,
+		strings.Join(terminal.ColorModeNames(), ", "), colorEnvVar,
 	))
-	stratagemsPath := flag.String("stratagems", os.Getenv(STRATAGEMS_ENV_VAR), fmt.Sprintf(
+	stratagemsPath := flag.String("stratagems", os.Getenv(stratagemsEnvVar), fmt.Sprintf(
 		"YAML file with the stratagems to train on, defaults to the embedded list (can also be set with %s)",
-		STRATAGEMS_ENV_VAR,
+		stratagemsEnvVar,
 	))
-	iconsMode := flag.String("icons", envOrDefault(ICONS_ENV_VAR, DEFAULT_ICONS_MODE), fmt.Sprintf(
+	iconsMode := flag.String("icons", envOrDefault(iconsEnvVar, terminal.DefaultIconsMode), fmt.Sprintf(
 		"stratagem icons, one of: %s; they require a terminal supporting the kitty graphics protocol (can also be set with %s)",
-		strings.Join(IconsModeNames(), ", "), ICONS_ENV_VAR,
+		strings.Join(terminal.IconsModeNames(), ", "), iconsEnvVar,
 	))
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Println(Version())
+		fmt.Println(buildinfo.Version(version, commit, date))
 		return
 	}
 
-	layout, err := GetLayout(*layoutName)
+	layout, err := keys.Get(*layoutName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 
-	colorProfile, err := ResolveColorProfile(*colorMode, os.Getenv, StdoutIsTTY())
+	colorProfile, err := terminal.ResolveColorProfile(*colorMode, os.Getenv, terminal.StdoutIsTTY())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 
-	stratagems, err := LoadStratagems(*stratagemsPath)
+	stratagems, err := stratagem.Load(*stratagemsPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 
-	showIcons, err := ResolveIconsMode(*iconsMode, StdoutIsTTY())
+	showIcons, err := terminal.ResolveIconsMode(*iconsMode, terminal.StdoutIsTTY())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
@@ -63,21 +84,21 @@ func main() {
 	if showIcons {
 		// Terminals store images per screen, so icons are transmitted once the
 		// alternate screen is active, and bubbletea renders inline into it.
-		fmt.Print(ENTER_ALT_SCREEN)
-		if iconIDs, err = TransmitIcons(os.Stdout, stratagems); err != nil {
-			fmt.Print(DELETE_IMAGES + EXIT_ALT_SCREEN)
+		fmt.Print(terminal.EnterAltScreen)
+		if iconIDs, err = ui.TransmitIcons(os.Stdout, stratagems); err != nil {
+			fmt.Print(terminal.DeleteImages + terminal.ExitAltScreen)
 			fmt.Fprintf(os.Stderr, "Cannot transmit icons: %v\n", err)
 			os.Exit(1)
 		}
 		options = nil
 	}
 
-	styles := NewStyles(colorProfile, iconIDs)
-	model := NewModel(styles, layout, stratagems)
+	styles := ui.NewStyles(colorProfile, iconIDs)
+	model := ui.NewModel(styles, layout, stratagems)
 
 	_, err = tea.NewProgram(model, options...).Run()
 	if showIcons {
-		fmt.Print(DELETE_IMAGES + EXIT_ALT_SCREEN)
+		fmt.Print(terminal.DeleteImages + terminal.ExitAltScreen)
 	}
 	if err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
