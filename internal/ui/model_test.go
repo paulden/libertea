@@ -237,3 +237,19 @@ func TestScreenKeepsItsSizeInEveryState(t *testing.T) {
 		}
 	}
 }
+
+func TestTimeStartsOverAfterAnError(t *testing.T) {
+	m := newTestModel(t, "arrows")
+	clock := newFakeClock()
+	m.now = clock.now
+
+	m = press(m, keyUp, keyUp)
+	// Let the penalty pass, without waiting for the timer.
+	clock.current = clock.current.Add(penaltyDuration)
+	m.blockedTimer.Timeout = 0
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+
+	if m.stats.lastTime != clock.step {
+		t.Errorf("the time should be measured from the first key after the penalty, got %v, want %v", m.stats.lastTime, clock.step)
+	}
+}
