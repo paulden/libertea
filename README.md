@@ -105,7 +105,7 @@ libertea -color 256
 
 ### Stratagems
 
-The stratagems come from [`stratagems.yaml`](stratagems.yaml), embedded in the binary.
+The stratagems come from [`stratagems.yaml`](internal/stratagem/stratagems.yaml), embedded in the binary.
 To train on your own selection, write a file with the same format and pass it with `-stratagems`:
 
 ```yaml
@@ -151,7 +151,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, the CI, releas
 - This is just a pet project to test [`bubbletea`](https://github.com/charmbracelet/bubbletea) and [lipgloss](https://github.com/charmbracelet/lipgloss) around the stratagem mechanism in Helldivers 2.
 - The list of stratagems is generated from the Helldivers [wiki](https://helldivers.wiki.gg/wiki/Stratagems), whose content is licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0).
 - Stratagem icons are hand traced from the game assets by [Dogo314](https://helldivers.wiki.gg/wiki/User:Dogo314) for the Helldivers Wiki.
-  The original artwork belongs to Arrowhead Game Studios, see [icons/README.md](icons/README.md).
+  The original artwork belongs to Arrowhead Game Studios, see [the icons README](internal/stratagem/icons/README.md).
 
 ## TODO
 

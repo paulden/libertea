@@ -1,9 +1,11 @@
-package main
+// Package stratagem loads the stratagems to train on, with their icons.
+package stratagem
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"fmt"
+	"io/fs"
 	"math/rand"
 	"os"
 	"slices"
@@ -11,14 +13,19 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const stratagemsEnvVar = "LIBERTEA_STRATAGEMS"
-
 // Generated from the Helldivers Wiki with `go run ./cmd/update-stratagems`.
 //
 //go:embed stratagems.yaml
 var embeddedStratagems []byte
 
-var categories = []string{"offensive", "supply", "defensive", "mission"}
+// Stratagem icons are hand traced from the game assets by Dogo314 for the
+// Helldivers Wiki, see icons/README.md. They are generated with
+// `go run ./cmd/update-stratagems`.
+//
+//go:embed icons/*.png
+var iconFiles embed.FS
+
+var Categories = []string{"offensive", "supply", "defensive", "mission"}
 
 var directions = map[string]rune{
 	"up":    'u',
@@ -27,12 +34,15 @@ var directions = map[string]rune{
 	"right": 'r',
 }
 
-type stratagem struct {
-	name     string
-	category string
-	kind     string
-	code     []rune
-	icon     string
+type Stratagem struct {
+	Name     string
+	Category string
+	// Kind is the type of the stratagem in the wiki, such as Orbital or Eagle.
+	Kind string
+	// Code is made of the directions 'u', 'd', 'l' and 'r'.
+	Code []rune
+	// Icon is the name of an embedded icon, empty when there is none.
+	Icon string
 }
 
 type stratagemsFile struct {
@@ -45,25 +55,25 @@ type stratagemsFile struct {
 	} `yaml:"stratagems"`
 }
 
-// LoadStratagems reads stratagems from a YAML file, or from the embedded list
-// when no path is given.
-func LoadStratagems(path string) ([]stratagem, error) {
+// Load reads stratagems from a YAML file, or from the embedded list when no
+// path is given.
+func Load(path string) ([]Stratagem, error) {
 	if path == "" {
-		return ParseStratagems(embeddedStratagems)
+		return Parse(embeddedStratagems)
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	stratagems, err := ParseStratagems(data)
+	stratagems, err := Parse(data)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	return stratagems, nil
 }
 
-func ParseStratagems(data []byte) ([]stratagem, error) {
+func Parse(data []byte) ([]Stratagem, error) {
 	var file stratagemsFile
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
@@ -71,7 +81,7 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 		return nil, fmt.Errorf("invalid stratagems file: %w", err)
 	}
 
-	stratagems := make([]stratagem, 0, len(file.Stratagems))
+	stratagems := make([]Stratagem, 0, len(file.Stratagems))
 	seen := map[string]bool{}
 
 	for i, entry := range file.Stratagems {
@@ -83,8 +93,8 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 		}
 		seen[entry.Name] = true
 
-		if !slices.Contains(categories, entry.Category) {
-			return nil, fmt.Errorf("stratagem %q has an unknown category %q, expected one of: %v", entry.Name, entry.Category, categories)
+		if !slices.Contains(Categories, entry.Category) {
+			return nil, fmt.Errorf("stratagem %q has an unknown category %q, expected one of: %v", entry.Name, entry.Category, Categories)
 		}
 		if len(entry.Code) == 0 {
 			return nil, fmt.Errorf("stratagem %q has no code", entry.Name)
@@ -103,7 +113,7 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 			return nil, fmt.Errorf("stratagem %q has an unknown icon %q", entry.Name, entry.Icon)
 		}
 
-		stratagems = append(stratagems, stratagem{entry.Name, entry.Category, entry.Type, code, entry.Icon})
+		stratagems = append(stratagems, Stratagem{entry.Name, entry.Category, entry.Type, code, entry.Icon})
 	}
 
 	if len(stratagems) == 0 {
@@ -112,13 +122,28 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 	return stratagems, nil
 }
 
-// GetRandomStratagem picks a random stratagem, avoiding the excluded one so
-// that the same stratagem is never asked twice in a row.
-func GetRandomStratagem(stratagems []stratagem, excludedName string) stratagem {
+// Random picks a random stratagem, avoiding the excluded one so that the same
+// stratagem is never asked twice in a row.
+func Random(stratagems []Stratagem, excludedName string) Stratagem {
 	for {
 		candidate := stratagems[rand.Intn(len(stratagems))]
-		if candidate.name != excludedName || len(stratagems) == 1 {
+		if candidate.Name != excludedName || len(stratagems) == 1 {
 			return candidate
 		}
 	}
+}
+
+func iconPath(icon string) string {
+	return "icons/" + icon + ".png"
+}
+
+// HasIcon tells whether an icon is embedded.
+func HasIcon(icon string) bool {
+	_, err := fs.Stat(iconFiles, iconPath(icon))
+	return err == nil
+}
+
+// Icon returns the PNG data of an embedded icon.
+func Icon(icon string) ([]byte, error) {
+	return iconFiles.ReadFile(iconPath(icon))
 }

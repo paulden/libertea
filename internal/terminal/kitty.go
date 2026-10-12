@@ -1,11 +1,9 @@
-package main
+package terminal
 
 import (
-	"embed"
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"strings"
 	"time"
@@ -14,22 +12,16 @@ import (
 	"github.com/muesli/cancelreader"
 )
 
-// Stratagem icons are hand traced from the game assets by Dogo314 for the
-// Helldivers Wiki, see icons/README.md. They are generated with
-// `go run ./cmd/update-stratagems`.
-//
-//go:embed icons/*.png
-var iconFiles embed.FS
-
 // Icons are displayed with the kitty graphics protocol and its Unicode
 // placeholders: images are transmitted once, then drawn with regular text
 // cells that bubbletea can render and redraw like any other character.
 // See https://sw.kovidgoyal.net/kitty/graphics-protocol/#unicode-placeholders
 const (
-	iconColumns      = 12
-	iconRows         = 6
-	iconsEnvVar      = "LIBERTEA_ICONS"
-	defaultIconsMode = "auto"
+	// Size of the icons, in cells.
+	IconColumns = 12
+	IconRows    = 6
+
+	DefaultIconsMode = "auto"
 
 	kittyPlaceholder = '\U0010EEEE'
 	kittyChunkSize   = 4096
@@ -38,10 +30,10 @@ const (
 	deviceAttributes = "\x1b[c"
 	queryTimeout     = time.Second
 
-	enterAltScreen = "\x1b[?1049h\x1b[H"
-	exitAltScreen  = "\x1b[?1049l"
+	EnterAltScreen = "\x1b[?1049h\x1b[H"
+	ExitAltScreen  = "\x1b[?1049l"
 	// Delete every image and free its data.
-	deleteImages = "\x1b_Ga=d,d=A,q=2\x1b\\"
+	DeleteImages = "\x1b_Ga=d,d=A,q=2\x1b\\"
 )
 
 // Combining characters encoding row and column numbers, from
@@ -52,16 +44,7 @@ var kittyDiacritics = []rune{
 }
 
 func IconsModeNames() []string {
-	return []string{defaultIconsMode, "kitty", "none"}
-}
-
-func iconPath(icon string) string {
-	return "icons/" + icon + ".png"
-}
-
-func HasIcon(icon string) bool {
-	_, err := fs.Stat(iconFiles, iconPath(icon))
-	return err == nil
+	return []string{DefaultIconsMode, "kitty", "none"}
 }
 
 // ResolveIconsMode tells whether icons can be displayed. The "auto" mode asks
@@ -72,7 +55,7 @@ func ResolveIconsMode(mode string, isTTY bool) (bool, error) {
 		return false, nil
 	case "kitty":
 		return true, nil
-	case defaultIconsMode:
+	case DefaultIconsMode:
 		if !isTTY || !term.IsTerminal(os.Stdin.Fd()) {
 			return false, nil
 		}
@@ -136,28 +119,6 @@ func ParseQueryResponse(response string) (supported bool, done bool) {
 	return strings.Contains(response[:start], kittyQueryOK), true
 }
 
-// TransmitIcons sends the icons of the stratagems to the terminal, and
-// returns the image id assigned to each icon.
-func TransmitIcons(w io.Writer, stratagems []stratagem) (map[string]int, error) {
-	ids := map[string]int{}
-	for _, s := range stratagems {
-		if s.icon == "" || ids[s.icon] != 0 {
-			continue
-		}
-		data, err := iconFiles.ReadFile(iconPath(s.icon))
-		if err != nil {
-			return nil, err
-		}
-
-		id := len(ids) + 1
-		if _, err := io.WriteString(w, TransmitCommands(id, data)); err != nil {
-			return nil, err
-		}
-		ids[s.icon] = id
-	}
-	return ids, nil
-}
-
 // TransmitCommands builds the escape sequences that upload a PNG image and
 // create a virtual placement for Unicode placeholders. Responses are
 // suppressed so that they do not reach bubbletea as key presses.
@@ -178,7 +139,7 @@ func TransmitCommands(id int, png []byte) string {
 		}
 	}
 
-	fmt.Fprintf(&b, "\x1b_Ga=p,U=1,i=%d,c=%d,r=%d,q=2\x1b\\", id, iconColumns, iconRows)
+	fmt.Fprintf(&b, "\x1b_Ga=p,U=1,i=%d,c=%d,r=%d,q=2\x1b\\", id, IconColumns, IconRows)
 	return b.String()
 }
 
@@ -187,11 +148,11 @@ func TransmitCommands(id int, png []byte) string {
 func IconPlaceholder(id int) string {
 	color := fmt.Sprintf("\x1b[38;2;%d;%d;%dm", (id>>16)&0xFF, (id>>8)&0xFF, id&0xFF)
 
-	lines := make([]string, iconRows)
-	for row := range iconRows {
+	lines := make([]string, IconRows)
+	for row := range IconRows {
 		var line strings.Builder
 		line.WriteString(color)
-		for column := range iconColumns {
+		for column := range IconColumns {
 			line.WriteRune(kittyPlaceholder)
 			line.WriteRune(kittyDiacritics[row])
 			line.WriteRune(kittyDiacritics[column])

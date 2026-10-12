@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"strings"
@@ -7,17 +7,20 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
+
+	"github.com/paulden/libertea/internal/keys"
+	"github.com/paulden/libertea/internal/stratagem"
 )
 
-var testStratagem = stratagem{name: "Test Stratagem", category: "offensive", kind: "Orbital", code: []rune{'u', 'd', 'l', 'r'}}
+var testStratagem = stratagem.Stratagem{Name: "Test Stratagem", Category: "offensive", Kind: "Orbital", Code: []rune{'u', 'd', 'l', 'r'}}
 
-func newTestModel(t *testing.T, layoutName string) model {
+func newTestModel(t *testing.T, layoutName string) Model {
 	t.Helper()
-	layout, err := GetLayout(layoutName)
+	layout, err := keys.Get(layoutName)
 	if err != nil {
 		t.Fatal(err)
 	}
-	stratagems, err := LoadStratagems("")
+	stratagems, err := stratagem.Load("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,10 +29,10 @@ func newTestModel(t *testing.T, layoutName string) model {
 	return m
 }
 
-func press(m model, keys ...tea.KeyMsg) model {
+func press(m Model, keys ...tea.KeyMsg) Model {
 	for _, key := range keys {
 		updated, _ := m.Update(key)
-		m = updated.(model)
+		m = updated.(Model)
 	}
 	return m
 }
@@ -54,7 +57,7 @@ func TestCompleteStratagemWithArrows(t *testing.T) {
 	if m.stratagemCompletion != 0 {
 		t.Errorf("completion should be reset, got %d", m.stratagemCompletion)
 	}
-	if m.currentStratagem.name == testStratagem.name {
+	if m.currentStratagem.Name == testStratagem.Name {
 		t.Error("the same stratagem should not be asked twice in a row")
 	}
 	if m.stats.lastTime == 0 || m.stats.bestTime == 0 {
@@ -94,7 +97,7 @@ func TestErrorRestartsStratagemFromScratch(t *testing.T) {
 	if !m.blockedTimer.Running() {
 		t.Error("input should be blocked after an error")
 	}
-	if m.currentStratagem.name != testStratagem.name {
+	if m.currentStratagem.Name != testStratagem.Name {
 		t.Error("the stratagem should not change after an error")
 	}
 
@@ -124,22 +127,13 @@ func TestQuitKeys(t *testing.T) {
 	}
 }
 
-func TestUnknownLayout(t *testing.T) {
-	if _, err := GetLayout("dvorak"); err == nil {
-		t.Error("unknown layout should return an error")
-	}
-	if _, err := GetLayout("ZQSD"); err != nil {
-		t.Errorf("layout names should be case insensitive: %v", err)
-	}
-}
-
 func TestViewIsCenteredInTheTerminal(t *testing.T) {
 	m := newTestModel(t, "all")
 	screen := m.View()
 	screenWidth, screenHeight := lipgloss.Width(screen), lipgloss.Height(screen)
 
 	updated, _ := m.Update(tea.WindowSizeMsg{Width: screenWidth + 40, Height: screenHeight + 10})
-	view := updated.(model).View()
+	view := updated.(Model).View()
 
 	if lipgloss.Width(view) != screenWidth+40 || lipgloss.Height(view) != screenHeight+10 {
 		t.Fatalf("view should fill the terminal, got %dx%d", lipgloss.Width(view), lipgloss.Height(view))
@@ -158,7 +152,7 @@ func TestViewInASmallTerminal(t *testing.T) {
 	screen := m.View()
 
 	updated, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
-	if view := updated.(model).View(); view != screen {
+	if view := updated.(Model).View(); view != screen {
 		t.Error("the screen should be left untouched when the terminal is too small")
 	}
 }

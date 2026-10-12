@@ -1,4 +1,6 @@
-package main
+// Package terminal detects what the terminal can display: colors, and images
+// with the kitty graphics protocol.
+package terminal
 
 import (
 	"fmt"
@@ -9,10 +11,7 @@ import (
 	"github.com/muesli/termenv"
 )
 
-const (
-	defaultColorMode = "auto"
-	colorEnvVar      = "LIBERTEA_COLOR"
-)
+const DefaultColorMode = "auto"
 
 var colorModes = map[string]termenv.Profile{
 	"none":      termenv.Ascii,
@@ -26,14 +25,14 @@ var colorModes = map[string]termenv.Profile{
 var colorCapableTerms = []string{"xterm", "screen", "tmux", "rxvt"}
 
 func ColorModeNames() []string {
-	return []string{defaultColorMode, "none", "16", "256", "truecolor"}
+	return []string{DefaultColorMode, "none", "16", "256", "truecolor"}
 }
 
 // ResolveColorProfile turns a color mode into a termenv profile. The "auto"
 // mode relies on termenv detection, which honors NO_COLOR and CLICOLOR_FORCE.
 func ResolveColorProfile(mode string, getenv func(string) string, isTTY bool) (termenv.Profile, error) {
 	mode = strings.ToLower(mode)
-	if mode != defaultColorMode {
+	if mode != DefaultColorMode {
 		profile, ok := colorModes[mode]
 		if !ok {
 			return termenv.Ascii, fmt.Errorf("unknown color mode %q, expected one of: %s", mode, strings.Join(ColorModeNames(), ", "))

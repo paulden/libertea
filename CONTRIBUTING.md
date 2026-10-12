@@ -13,6 +13,20 @@ gofmt -l . && go vet ./...
 
 Pull requests run the same checks in CI, plus `go mod tidy -diff`, `govulncheck` and a multi-platform image build.
 
+### Project layout
+
+| Path | Content |
+|------|---------|
+| `main.go` | Flags, environment variables and wiring |
+| `internal/stratagem` | Stratagem list and icons, embedded in the binary |
+| `internal/keys` | Keyboard layouts |
+| `internal/terminal` | Color detection and the kitty graphics protocol |
+| `internal/ui` | Game screen: bubbletea model and lipgloss styles |
+| `internal/buildinfo` | Version string |
+| `cmd/update-stratagems` | Regenerates the stratagem list and icons from the Helldivers Wiki |
+
+`main.go` stays at the root so that `go install github.com/paulden/libertea@latest` keeps working.
+
 ## Continuous integration
 
 | Workflow | Trigger | What it does |
