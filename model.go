@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	PENALTY_DURATION = 2 * time.Second
-	PENALTY_TICK     = 100 * time.Millisecond
+	penaltyDuration = 2 * time.Second
+	penaltyTick     = 100 * time.Millisecond
 )
 
 type stats struct {
@@ -84,7 +84,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.stats.errors++
 			m.stats.streak = 0
 			m.stratagemCompletion = 0
-			m.blockedTimer = timer.NewWithInterval(PENALTY_DURATION, PENALTY_TICK)
+			m.blockedTimer = timer.NewWithInterval(penaltyDuration, penaltyTick)
 			return m, m.blockedTimer.Init()
 		}
 

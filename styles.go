@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	STRATAGEM_WIDTH = 55
-	ICON_GAP        = 2
+	stratagemWidth = 55
+	iconGap        = 2
 )
 
 // Colors are given explicitly for each profile: the automatic downgrade of hex
@@ -27,7 +27,7 @@ var (
 
 // In-game permit colors of each stratagem category, with bright ANSI variants
 // that stay readable on dark backgrounds.
-var CATEGORY_COLORS = map[string]lipgloss.CompleteColor{
+var categoryColors = map[string]lipgloss.CompleteColor{
 	"offensive": color("#DC6455", "9"),
 	"supply":    color("#55B9D2", "12"),
 	"defensive": color("#699655", "10"),
@@ -47,8 +47,8 @@ var (
 			BorderForeground(borderForeground).
 			BorderBackground(borderBackground)
 
-	strategemStyle = lipgloss.NewStyle().
-			Width(STRATAGEM_WIDTH).
+	stratagemStyle = lipgloss.NewStyle().
+			Width(stratagemWidth).
 			Bold(true).
 			Align(lipgloss.Center)
 
@@ -75,7 +75,7 @@ var (
 
 // Plain arrows from the Arrows block render as a single cell in most fonts,
 // unlike the Supplemental Arrows-C ones which caused rendering artifacts.
-var ARROWS_DISPLAY = map[rune]string{
+var arrowSymbols = map[rune]string{
 	'u': "↑",
 	'd': "↓",
 	'r': "→",
@@ -84,7 +84,7 @@ var ARROWS_DISPLAY = map[rune]string{
 
 type Styles interface {
 	FormatScoreTable(stats stats) string
-	FormatStratagem(strategem stratagem, completion int, isBlocked bool, remaining time.Duration) string
+	FormatStratagem(stratagem stratagem, completion int, isBlocked bool, remaining time.Duration) string
 	FormatTimes(stats stats) string
 	FormatScreen(render string, layoutDescription string) string
 }
@@ -139,23 +139,23 @@ func (s styles) FormatScoreTable(stats stats) string {
 
 func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked bool, remaining time.Duration) string {
 	icon := s.icon(stratagem)
-	style := strategemStyle
+	style := stratagemStyle
 	if icon != "" {
-		style = style.Width(STRATAGEM_WIDTH - ICON_COLUMNS - ICON_GAP)
+		style = style.Width(stratagemWidth - iconColumns - iconGap)
 	}
 
 	name, label := stratagem.name, categoryLabel(stratagem)
 	if !isBlocked {
-		categoryStyle := lipgloss.NewStyle().Foreground(CATEGORY_COLORS[stratagem.category])
+		categoryStyle := lipgloss.NewStyle().Foreground(categoryColors[stratagem.category])
 		name, label = categoryStyle.Bold(true).Render(name), categoryStyle.Render(label)
 	}
 	rendering := fmt.Sprintf("%s\n%s\n\n", name, label)
 
 	for i, arrow := range stratagem.code {
 		if i < completion {
-			rendering += validInput.Render(ARROWS_DISPLAY[arrow])
+			rendering += validInput.Render(arrowSymbols[arrow])
 		} else {
-			rendering += ARROWS_DISPLAY[arrow]
+			rendering += arrowSymbols[arrow]
 		}
 		rendering += " "
 	}
@@ -176,7 +176,7 @@ func (s styles) FormatStratagem(stratagem stratagem, completion int, isBlocked b
 
 func withIcon(icon, text string) string {
 	if icon != "" {
-		text = lipgloss.JoinHorizontal(lipgloss.Center, icon, strings.Repeat(" ", ICON_GAP), text)
+		text = lipgloss.JoinHorizontal(lipgloss.Center, icon, strings.Repeat(" ", iconGap), text)
 	}
 	return fmt.Sprintf("%s \n", text)
 }

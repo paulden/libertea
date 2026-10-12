@@ -32,8 +32,8 @@ func TestUnknownIcon(t *testing.T) {
 func TestIconPlaceholder(t *testing.T) {
 	placeholder := IconPlaceholder(0x010203)
 
-	if lipgloss.Width(placeholder) != ICON_COLUMNS || lipgloss.Height(placeholder) != ICON_ROWS {
-		t.Errorf("placeholder should be %dx%d cells, got %dx%d", ICON_COLUMNS, ICON_ROWS, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
+	if lipgloss.Width(placeholder) != iconColumns || lipgloss.Height(placeholder) != iconRows {
+		t.Errorf("placeholder should be %dx%d cells, got %dx%d", iconColumns, iconRows, lipgloss.Width(placeholder), lipgloss.Height(placeholder))
 	}
 
 	lines := strings.Split(placeholder, "\n")
@@ -41,9 +41,9 @@ func TestIconPlaceholder(t *testing.T) {
 		if !strings.HasPrefix(line, "\x1b[38;2;1;2;3m") {
 			t.Errorf("row %d: the image id should be encoded in the foreground color: %q", row, line)
 		}
-		cells := strings.Split(strings.TrimSuffix(strings.TrimPrefix(line, "\x1b[38;2;1;2;3m"), "\x1b[39m"), string(KITTY_PLACEHOLDER))[1:]
+		cells := strings.Split(strings.TrimSuffix(strings.TrimPrefix(line, "\x1b[38;2;1;2;3m"), "\x1b[39m"), string(kittyPlaceholder))[1:]
 		for column, cell := range cells {
-			want := string([]rune{KITTY_DIACRITICS[row], KITTY_DIACRITICS[column]})
+			want := string([]rune{kittyDiacritics[row], kittyDiacritics[column]})
 			if cell != want {
 				t.Errorf("cell %d,%d: got diacritics %q, want %q", row, column, cell, want)
 			}
@@ -65,8 +65,8 @@ func TestTransmitCommands(t *testing.T) {
 	}
 	var payload string
 	for _, chunk := range chunks[:3] {
-		if len(chunk[2]) > KITTY_CHUNK_SIZE {
-			t.Errorf("chunk larger than %d bytes: %d", KITTY_CHUNK_SIZE, len(chunk[2]))
+		if len(chunk[2]) > kittyChunkSize {
+			t.Errorf("chunk larger than %d bytes: %d", kittyChunkSize, len(chunk[2]))
 		}
 		payload += chunk[2]
 	}
@@ -147,14 +147,14 @@ func TestIconShownNextToTheStratagem(t *testing.T) {
 
 	for _, ids := range []map[string]int{nil, {"orbital-gatling-barrage": 3}} {
 		render := NewStyles(termenv.TrueColor, ids).FormatStratagem(withIcon, 0, false, 0)
-		shown := strings.ContainsRune(render, KITTY_PLACEHOLDER)
+		shown := strings.ContainsRune(render, kittyPlaceholder)
 		if shown != (ids != nil) {
 			t.Errorf("ids %v: icon shown = %v", ids, shown)
 		}
 		if !strings.Contains(render, "Test Stratagem") {
 			t.Errorf("ids %v: the name should always be shown", ids)
 		}
-		if lipgloss.Width(render) > STRATAGEM_WIDTH+1 {
+		if lipgloss.Width(render) > stratagemWidth+1 {
 			t.Errorf("ids %v: render is too wide (%d)", ids, lipgloss.Width(render))
 		}
 	}

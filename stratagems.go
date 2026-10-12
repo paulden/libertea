@@ -11,16 +11,16 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const STRATAGEMS_ENV_VAR = "LIBERTEA_STRATAGEMS"
+const stratagemsEnvVar = "LIBERTEA_STRATAGEMS"
 
 // Generated from the Helldivers Wiki with `go run ./cmd/update-stratagems`.
 //
 //go:embed stratagems.yaml
 var embeddedStratagems []byte
 
-var CATEGORIES = []string{"offensive", "supply", "defensive", "mission"}
+var categories = []string{"offensive", "supply", "defensive", "mission"}
 
-var DIRECTIONS = map[string]rune{
+var directions = map[string]rune{
 	"up":    'u',
 	"down":  'd',
 	"left":  'l',
@@ -83,8 +83,8 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 		}
 		seen[entry.Name] = true
 
-		if !slices.Contains(CATEGORIES, entry.Category) {
-			return nil, fmt.Errorf("stratagem %q has an unknown category %q, expected one of: %v", entry.Name, entry.Category, CATEGORIES)
+		if !slices.Contains(categories, entry.Category) {
+			return nil, fmt.Errorf("stratagem %q has an unknown category %q, expected one of: %v", entry.Name, entry.Category, categories)
 		}
 		if len(entry.Code) == 0 {
 			return nil, fmt.Errorf("stratagem %q has no code", entry.Name)
@@ -92,7 +92,7 @@ func ParseStratagems(data []byte) ([]stratagem, error) {
 
 		code := make([]rune, 0, len(entry.Code))
 		for _, word := range entry.Code {
-			direction, ok := DIRECTIONS[word]
+			direction, ok := directions[word]
 			if !ok {
 				return nil, fmt.Errorf("stratagem %q has an unknown direction %q, expected up, down, left or right", entry.Name, word)
 			}

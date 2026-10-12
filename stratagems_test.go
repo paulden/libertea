@@ -16,12 +16,12 @@ func TestEmbeddedStratagemsAreValid(t *testing.T) {
 		t.Errorf("expected the full wiki list, got %d stratagems", len(stratagems))
 	}
 
-	categories := map[string]int{}
+	counts := map[string]int{}
 	for _, s := range stratagems {
-		categories[s.category]++
+		counts[s.category]++
 	}
-	for _, category := range CATEGORIES {
-		if categories[category] == 0 {
+	for _, category := range categories {
+		if counts[category] == 0 {
 			t.Errorf("no stratagem in category %q", category)
 		}
 	}

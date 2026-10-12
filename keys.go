@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	DEFAULT_LAYOUT = "all"
-	LAYOUT_ENV_VAR = "LIBERTEA_LAYOUT"
+	defaultLayout = "all"
+	layoutEnvVar  = "LIBERTEA_LAYOUT"
 )
 
 type keyLayout struct {
@@ -46,7 +46,7 @@ var vimKeys = map[string]rune{
 
 // None of the letter layouts overlap in a conflicting way (S and D mean the
 // same direction in WASD and ZQSD), so they can all be enabled at once.
-var LAYOUTS = map[string]keyLayout{
+var layouts = map[string]keyLayout{
 	"arrows": {"arrows", mergeKeys(arrowKeys)},
 	"wasd":   {"arrows / WASD", mergeKeys(arrowKeys, wasdKeys)},
 	"zqsd":   {"arrows / ZQSD", mergeKeys(arrowKeys, zqsdKeys)},
@@ -65,8 +65,8 @@ func mergeKeys(mappings ...map[string]rune) map[string]rune {
 }
 
 func LayoutNames() []string {
-	names := make([]string, 0, len(LAYOUTS))
-	for name := range LAYOUTS {
+	names := make([]string, 0, len(layouts))
+	for name := range layouts {
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -74,7 +74,7 @@ func LayoutNames() []string {
 }
 
 func GetLayout(name string) (keyLayout, error) {
-	layout, ok := LAYOUTS[strings.ToLower(name)]
+	layout, ok := layouts[strings.ToLower(name)]
 	if !ok {
 		return keyLayout{}, fmt.Errorf("unknown layout %q, expected one of: %s", name, strings.Join(LayoutNames(), ", "))
 	}

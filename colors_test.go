@@ -92,8 +92,8 @@ func TestCategoryShownWithAndWithoutColors(t *testing.T) {
 }
 
 func TestEveryCategoryHasAColor(t *testing.T) {
-	for _, category := range CATEGORIES {
-		if _, ok := CATEGORY_COLORS[category]; !ok {
+	for _, category := range categories {
+		if _, ok := categoryColors[category]; !ok {
 			t.Errorf("category %q has no color", category)
 		}
 	}
