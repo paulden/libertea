@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -26,7 +27,23 @@ func newTestModel(t *testing.T, layoutName string) Model {
 	}
 	m := NewModel(NewStyles(termenv.ANSI256, nil), layout, stratagems)
 	m.currentStratagem = testStratagem
+	m.now = newFakeClock().now
 	return m
+}
+
+// fakeClock moves forward by step each time it is read.
+type fakeClock struct {
+	current time.Time
+	step    time.Duration
+}
+
+func newFakeClock() *fakeClock {
+	return &fakeClock{current: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), step: 100 * time.Millisecond}
+}
+
+func (c *fakeClock) now() time.Time {
+	c.current = c.current.Add(c.step)
+	return c.current
 }
 
 func press(m Model, keys ...tea.KeyMsg) Model {
@@ -62,6 +79,25 @@ func TestCompleteStratagemWithArrows(t *testing.T) {
 	}
 	if m.stats.lastTime == 0 || m.stats.bestTime == 0 {
 		t.Errorf("times should be recorded: %+v", m.stats)
+	}
+}
+
+func TestTimesAreMeasuredFromTheFirstKey(t *testing.T) {
+	m := newTestModel(t, "arrows")
+	clock := newFakeClock()
+	m.now = clock.now
+
+	// The clock is read on the first and the last key.
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if m.stats.lastTime != clock.step || m.stats.bestTime != clock.step {
+		t.Errorf("got last %v and best %v, want %v", m.stats.lastTime, m.stats.bestTime, clock.step)
+	}
+
+	clock.step = 300 * time.Millisecond
+	m.currentStratagem = testStratagem
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if m.stats.lastTime != 300*time.Millisecond || m.stats.bestTime != 100*time.Millisecond {
+		t.Errorf("a slower stratagem should not change the best time, got last %v and best %v", m.stats.lastTime, m.stats.bestTime)
 	}
 }
 
@@ -154,5 +190,50 @@ func TestViewInASmallTerminal(t *testing.T) {
 	updated, _ := m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
 	if view := updated.(Model).View(); view != screen {
 		t.Error("the screen should be left untouched when the terminal is too small")
+	}
+}
+
+func TestNewBestAndRecentTimes(t *testing.T) {
+	m := newTestModel(t, "arrows")
+	clock := newFakeClock()
+	m.now = clock.now
+
+	for i := range sparklineSize + 2 {
+		m.currentStratagem = testStratagem
+		m = press(m, keyUp, keyDown, keyLeft, keyRight)
+		if m.stats.newBest {
+			t.Errorf("success %d: a time equal to the best is not a new best", i+1)
+		}
+	}
+	if len(m.stats.recentTimes) != sparklineSize {
+		t.Errorf("the sparkline should keep the last %d times, got %d", sparklineSize, len(m.stats.recentTimes))
+	}
+
+	clock.step = 50 * time.Millisecond
+	m.currentStratagem = testStratagem
+	m = press(m, keyUp, keyDown, keyLeft, keyRight)
+	if !m.stats.newBest || m.stats.bestTime != 50*time.Millisecond {
+		t.Errorf("a faster time should be a new best: %+v", m.stats)
+	}
+	if last := m.stats.recentTimes[len(m.stats.recentTimes)-1]; last != 50*time.Millisecond {
+		t.Errorf("the last time should be at the end of the sparkline, got %v", last)
+	}
+}
+
+func TestScreenKeepsItsSizeInEveryState(t *testing.T) {
+	for _, profile := range []termenv.Profile{termenv.Ascii, termenv.TrueColor} {
+		m := newTestModel(t, "all")
+		m.styles = NewStyles(profile, nil)
+		playing := m.View()
+		blocked := press(m, keyDown).View()
+
+		if lipgloss.Height(playing) != lipgloss.Height(blocked) {
+			t.Errorf("profile %v: the height changed after a wrong input: %d, then %d", profile, lipgloss.Height(playing), lipgloss.Height(blocked))
+		}
+		for _, view := range []string{playing, blocked} {
+			if lipgloss.Width(view) != screenWidth {
+				t.Errorf("profile %v: the screen should be %d cells wide, got %d", profile, screenWidth, lipgloss.Width(view))
+			}
+		}
 	}
 }

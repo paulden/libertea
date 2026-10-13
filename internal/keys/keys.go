@@ -10,9 +10,9 @@ import (
 const Default = "all"
 
 type Layout struct {
-	// Description lists the keys of the layout, for the help line.
-	Description string
-	keys        map[string]rune
+	// Hint lists the keys of the layout, for the help line.
+	Hint string
+	keys map[string]rune
 }
 
 var arrowKeys = map[string]rune{
@@ -46,11 +46,11 @@ var vimKeys = map[string]rune{
 // None of the letter layouts overlap in a conflicting way (S and D mean the
 // same direction in WASD and ZQSD), so they can all be enabled at once.
 var layouts = map[string]Layout{
-	"arrows": {"arrows", mergeKeys(arrowKeys)},
-	"wasd":   {"arrows / WASD", mergeKeys(arrowKeys, wasdKeys)},
-	"zqsd":   {"arrows / ZQSD", mergeKeys(arrowKeys, zqsdKeys)},
-	"vim":    {"arrows / HJKL", mergeKeys(arrowKeys, vimKeys)},
-	"all":    {"arrows / WASD / ZQSD / HJKL", mergeKeys(arrowKeys, wasdKeys, zqsdKeys, vimKeys)},
+	"arrows": {"←↑↓→", mergeKeys(arrowKeys)},
+	"wasd":   {"←↑↓→ wasd", mergeKeys(arrowKeys, wasdKeys)},
+	"zqsd":   {"←↑↓→ zqsd", mergeKeys(arrowKeys, zqsdKeys)},
+	"vim":    {"←↑↓→ hjkl", mergeKeys(arrowKeys, vimKeys)},
+	"all":    {"←↑↓→ wasd zqsd hjkl", mergeKeys(arrowKeys, wasdKeys, zqsdKeys, vimKeys)},
 }
 
 func mergeKeys(mappings ...map[string]rune) map[string]rune {
