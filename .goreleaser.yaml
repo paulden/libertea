@@ -37,11 +37,12 @@ dockers_v2:
     platforms:
       - linux/amd64
       - linux/arm64
-    # `latest` follows the main branch, see .github/workflows/image.yml.
+    # `main` follows the main branch, see .github/workflows/image.yml.
     tags:
       - "{{ .Version }}"
       - "{{ if not .Prerelease }}{{ .Major }}.{{ .Minor }}{{ end }}"
       - "{{ if not .Prerelease }}{{ .Major }}{{ end }}"
+      - "{{ if not .Prerelease }}latest{{ end }}"
     labels:
       org.opencontainers.image.title: "{{ .ProjectName }}"
       org.opencontainers.image.description: "TUI stratagem hero to train your Helldivers 2 stratagem codes"
@@ -64,6 +65,17 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+      - "^Merge pull request"
+  # A commit goes to the first group whose regexp matches, Renovate's fix(deps) updates land in bug fixes.
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
 
 release:
   # Tags such as v1.3.0-rc.1 are published as pre-releases and never become the latest release.

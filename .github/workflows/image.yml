@@ -1,7 +1,7 @@
 name: Image
 
-# Reusable multi-platform image build, pushed as ghcr.io/<repository>:main and :latest from the main branch.
-# Release images are published by GoReleaser, see release.yml.
+# Reusable multi-platform image build, pushed as ghcr.io/<repository>:main from the main branch.
+# Release images, including :latest, are published by GoReleaser, see release.yml.
 on:
   workflow_call:
     inputs:
@@ -50,7 +50,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=sha-
 
       - name: Build${{ inputs.push && ' and push' || '' }}

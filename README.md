@@ -23,8 +23,9 @@ docker run --rm -it -e TERM -e COLORTERM ghcr.io/paulden/libertea
 
 | Tag | Content |
 |-----|---------|
-| `latest`, `main` | Latest commit on the `main` branch |
+| `latest` | Latest release |
 | `1`, `1.2`, `1.2.3` | Releases |
+| `main` | Latest commit on the `main` branch |
 | `sha-<commit>` | A commit on the `main` branch, the 10 most recent are kept |
 
 ### Binary
