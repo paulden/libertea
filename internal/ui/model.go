@@ -95,7 +95,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if direction != m.currentStratagem.Code[m.stratagemCompletion] {
 			m.stats.errors++
 			m.stats.streak = 0
+			// The stratagem starts over from scratch, and so does its time,
+			// from the first key after the penalty.
 			m.stratagemCompletion = 0
+			m.stratagemStart = time.Time{}
 			m.blockedTimer = timer.NewWithInterval(penaltyDuration, penaltyTick)
 			return m, m.blockedTimer.Init()
 		}
