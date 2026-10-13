@@ -1,0 +1,6 @@
+stratagems:
+  - name: A/G-16 Gatling Sentry
+    category: defensive
+    type: Sentry
+    code: [down, up, right, left]
+    icon: a-g-16-gatling-sentry
